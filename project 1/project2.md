@@ -6,7 +6,8 @@
 
 `sudo apt install nginx`
 
-To verify that nginx was successfully installed and is running as a service in Ubuntu, run:
+To verify that nginx was successfully installed and is running as a service in Ubuntu, run: 
+
 
 `sudo systemctl status nginx`
 ![install-nginx](https://user-images.githubusercontent.com/33351638/146085018-875a50c1-473e-4067-84e0-91a975f73b14.JPG)
