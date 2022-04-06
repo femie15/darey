@@ -10,7 +10,7 @@ After provisioning the EC2 instance and gaining access to the terminal...
 
 ###Upgrade ubuntu
 `sudo apt ugrade`
-!(https://github.com/femie15/darey/blob/main/project%201/project3/2-upgrade-apt.PNG)
+![Upgrade](https://github.com/femie15/darey/blob/main/project%201/project3/2-upgrade-apt.PNG)
 
 
 Getting Nodejs location from Ubuntu repositories
@@ -18,6 +18,7 @@ Getting Nodejs location from Ubuntu repositories
 
 Install  Nodejs and NPM
 `sudo apt-get install -y nodejs`
+![NPM](https://github.com/femie15/darey/blob/main/project%201/project3/3-node-npm%20installation.PNG)
 
 check version of nodeJs and NPM with the command below
 `node -v` for node and  `npm -v` for NPM
@@ -73,6 +74,7 @@ app.listen(port, () => {
 console.log(\``Server running on port ${port}\``)
 });`
 
+![indexjs](https://github.com/femie15/darey/blob/main/project%201/project3/6-indexJs.PNG)
 
 Now it is time to start our server to see if it works. Open your terminal in the same directory as your index.js file and type:
 
@@ -202,6 +204,8 @@ Use MLab cloud service to provision the db. 'https://www.mongodb.com/atlas-signu
 You can now go back to the Todo directory and create a ".env" file. `touch .env`
 
 and paste the Mongo DB credentials in it this way `DB = mongodb+srv://<username>:<password>@todo.tknie.mongodb.net/myFirstDatabase?retryWrites=true&w=majority` note that "todo.tknie.mongodb.net" is the nework address and 'myFirstDatabase" is the DBname
+
+![Mongodb](https://github.com/femie15/darey/blob/main/project%201/project3/11a-mongocred.PNG)
 
 Go back to the Todo directory and update the index.js file with the code below
 
