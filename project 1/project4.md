@@ -15,7 +15,7 @@ Add certificates
 
 ## Install NodeJS
 `sudo apt install -y nodejs`
-
+![Node](https://github.com/femie15/darey/blob/main/project%201/project4/1-install-node.PNG)
 
 ## Step 2: Install MongoD
 Run these commands
@@ -26,6 +26,7 @@ Run these commands
 
 Now Install MongoDB
 `sudo apt install -y mongodb`
+![MongoDb](https://github.com/femie15/darey/blob/main/project%201/project4/2-install-mongodb.PNG)
 
 Start The server
 `sudo service mongodb start`
@@ -251,7 +252,10 @@ Change the directory back up to Books
 Start the server by running this command:
 `node server.js`
 
-The server is now up and running, we can connect it via port 3300. You can launch a separate Putty or SSH console to test what curl command returns locally.
+The server is now up and running, we can connect it via port 3300. 
+![Security group](https://github.com/femie15/darey/blob/main/project%201/project4/4-security-group.PNG)
+
+You can launch a separate Putty or SSH console to test what curl command returns locally.
 `curl -s http://localhost:3300`
 
 `Run curl -s http://169.254.169.254/latest/meta-data/public-ipv4`
@@ -259,3 +263,4 @@ for Public IP address or
 `curl -s http://169.254.169.254/latest/meta-data/public-hostname`
 for Public DNS name
 
+![Security group](https://github.com/femie15/darey/blob/main/project%201/project4/5-web.PNG)
