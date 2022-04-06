@@ -6,9 +6,12 @@
 ###Update ubuntu
 After provisioning the EC2 instance and gaining access to the terminal...
 `sudo apt update`
+![Update](https://github.com/femie15/darey/blob/main/project%201/project3/1.PNG)
 
 ###Upgrade ubuntu
 `sudo apt ugrade`
+!(https://github.com/femie15/darey/blob/main/project%201/project3/2-upgrade-apt.PNG)
+
 
 Getting Nodejs location from Ubuntu repositories
 `curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -`
