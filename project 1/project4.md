@@ -232,14 +232,12 @@ Cpoy and paste the code below into index.html file.
           <th>Isbn</th>
           <th>Author</th>
           <th>Pages</th>
-
         </tr>
         <tr ng-repeat="book in books">
           <td>{{book.name}}</td>
           <td>{{book.isbn}}</td>
           <td>{{book.author}}</td>
           <td>{{book.pages}}</td>
-
           <td><input type="button" value="Delete" data-ng-click="del_book(book)"></td>
         </tr>
       </table>
