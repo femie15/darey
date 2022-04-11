@@ -8,7 +8,10 @@ update apt
 install mysql server
 `apt install mysql-server -y`
 
-to confirm the installation `systemctl enable mysql`
+to confirm the installation `systemctl enable mysql` afterwards we then adjust the security group to allow access for the cliient server by getting the client server ip address `ip addr show` and pasting it in the mysql server SG.
+![Security group](https://github.com/femie15/darey/blob/main/project%201/project%205/1-security%20group.PNG)
+
+
 
 then check into root of the mysql-client server and do `sudo -s`
 
@@ -56,3 +59,13 @@ we are therefore prompted to enter password for the user `password` after then w
 `Show databases;`
 
 We then get the list of databases.
+
+## mysql-Client
+
+![Client](https://github.com/femie15/darey/blob/main/project%201/project%205/3-client%20server.PNG)
+
+## mysql-Server
+
+![Security group](https://github.com/femie15/darey/blob/main/project%201/project%205/4-server.PNG)
+
+# Hurray !!!
