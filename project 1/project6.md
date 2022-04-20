@@ -123,13 +123,21 @@ Start Apache
 To install PHP and it’s depemdencies
 
 `yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+
  yum install yum-utils http://rpms.remirepo.net/enterprise/remi-release-8.rpm
+ 
  yum module list php
+ 
  yum module reset php
+ 
  yum module enable php:remi-7.4
+ 
  yum install php php-opcache php-gd php-curl php-mysqlnd
+ 
  systemctl start php-fpm
+ 
  systemctl enable php-fpm
+ 
  setsebool -P httpd_execmem 1`
 
 
@@ -140,18 +148,26 @@ Restart Apache
 Download wordpress and copy wordpress to var/www/html
 
   `mkdir wordpress
+  
   cd   wordpress
-  sudo wget http://wordpress.org/latest.tar.gz
-  sudo tar xzvf latest.tar.gz
-  sudo rm -rf latest.tar.gz
+  
+  wget http://wordpress.org/latest.tar.gz
+  
+  tar xzvf latest.tar.gz
+  
+  rm -rf latest.tar.gz
+  
   cp wordpress/wp-config-sample.php wordpress/wp-config.php
+  
   cp -R wordpress /var/www/html/`
   
 Configure SELinux Policies
 
 `chown -R apache:apache /var/www/html/wordpress
-  sudo chcon -t httpd_sys_rw_content_t /var/www/html/wordpress -R
-  sudo setsebool -P httpd_can_network_connect=1`
+ 
+ chcon -t httpd_sys_rw_content_t /var/www/html/wordpress -R
+ 
+ setsebool -P httpd_can_network_connect=1`
 
 
 
