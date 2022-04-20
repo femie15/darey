@@ -55,78 +55,104 @@ if we exhust the volume, we can create an additional physical volume, add it to 
 
 use `vgdisplay -v` you get the output below
 
-`
-  --- Volume group ---
-  VG Name               webdata-vg
-  System ID
-  Format                lvm2
-  Metadata Areas        3
-  Metadata Sequence No  3
-  VG Access             read/write
-  VG Status             resizable
-  MAX LV                0
-  Cur LV                2
-  Open LV               0
-  Max PV                0
-  Cur PV                3
-  Act PV                3
-  VG Size               <29.99 GiB
-  PE Size               4.00 MiB
-  Total PE              7677
-  Alloc PE / Size       7168 / 28.00 GiB
-  Free  PE / Size       509 / <1.99 GiB
-  VG UUID               0ecHjq-gzeZ-bQR3-c3pF-PkWe-Mx3U-pa1IJv
+Use mkfs.ext4 to format the logical volumes with ext4 filesystem
 
-  --- Logical volume ---
-  LV Path                /dev/webdata-vg/apps-lv
-  LV Name                apps-lv
-  VG Name                webdata-vg
-  LV UUID                2gdJ8n-OxDK-fkvW-PZ1r-9zVK-bF0q-hnh6oA
-  LV Write Access        read/write
-  LV Creation host, time ip-172-31-22-251.ec2.internal, 2022-04-20 16:46:45 +0000
-  LV Status              available
-  # open                 0
-  LV Size                14.00 GiB
-  Current LE             3584
-  Segments               2
-  Allocation             inherit
-  Read ahead sectors     auto
-  - currently set to     8192
-  Block device           253:0
+`mkfs -t ext4 /dev/webdata-vg/apps-lv` 
+`mkfs -t ext4 /dev/webdata-vg/logs-lv` OR 
 
-  --- Logical volume ---
-  LV Path                /dev/webdata-vg/logs-lv
-  LV Name                logs-lv
-  VG Name                webdata-vg
-  LV UUID                C1LSBC-JWzc-6ZJz-WinM-XS5y-NraO-4cC49X
-  LV Write Access        read/write
-  LV Creation host, time ip-172-31-22-251.ec2.internal, 2022-04-20 16:47:16 +0000
-  LV Status              available
-  # open                 0
-  LV Size                14.00 GiB
-  Current LE             3584
-  Segments               2
-  Allocation             inherit
-  Read ahead sectors     auto
-  - currently set to     8192
-  Block device           253:1
+`mkfs.ext4 /dev/webdata-vg/apps-lv` and `mkfs.ext4 /dev/webdata-vg/logs-lv`
 
-  --- Physical volumes ---
-  PV Name               /dev/xvdh1
-  PV UUID               1Hmlvc-uU4t-x736-7awt-RJ7M-f8Fv-0L3sfs
-  PV Status             allocatable
-  Total PE / Free PE    2559 / 0
+### create directories for web files
 
-  PV Name               /dev/xvdg1
-  PV UUID               h1OkeY-zfrf-scVq-qFir-1AUE-Vt1q-YvANo5
-  PV Status             allocatable
-  Total PE / Free PE    2559 / 509
+Create /var/www/html directory to store website files, (it's good to check if the directory exists first before creating.
 
-  PV Name               /dev/xvdf1
-  PV UUID               yakDdd-EtJl-iDyk-d0WQ-ETcC-yVjc-W2Jp63
-  PV Status             allocatable
-  Total PE / Free PE    2559 / 0
-`
+`mkdir -p /var/www/html` (the `-p` flag creates the directories that are not currently existing)
+
+### Logs directory
+
+Create /home/recovery/logs to store backup of log data
+
+`mkdir -p /home/recovery/logs`
+
+### mount volumes
+
+Check if the directory "/var/www/html" is empty (mounting will automatically delete existing content in the directory)
+
+then we can mount in the empty directory ` mount /dev/webdata-vg/apps-lv /var/www/html`
+
+For logs, if we check the content, we notice it's not empty `ls /var/log`
+
+We then need to backup the content in to the recovery placeholder using "rsync"
+
+`rsync -av /var/log/. /home/recovery/logs/`
+
+we can then mount the volume 
+`mount /dev/webdata-vg/logs-lv /var/log`
+
+at this point the contents in "/var/log" is already deleted, we then need to restore it back. 
+`rsync -av /home/recovery/logs/. /var/log`. we can do `df -h` to view the mounted volume
+
+We can now update /etc/fstab file so that the mount configuration will persist after restart of the server.
+The UUID of the device will be used to update the /etc/fstab file
+
+`UUID=5a75cdef-44e3-4222-8b6a-45139cb31eee /var/www/html ext4 defaults 0 0` 
+`UUID=d7513fc9-56a5-4c28-adaf-89b543ceed24 /var/log ext4 defaults 0 0`
+
+### Test the configuration and reload the daemon
+
+`mount -a` to test and 
+`systemctl daemon-reload` to reload
+
+we can verify setup by running `df -h`
+
+## DB server
+
+Repeat the same steps as for the Web Server, but instead of apps-lv create db-lv and mount it to /db directory instead of /var/www/html/
+
+# Install WordPress on your Web Server EC2
+
+Update the repository `yum -y update`
+
+Install wget, Apache and it’s dependencies `sudo yum -y install wget httpd php php-mysqlnd php-fpm php-json`
+
+Start Apache
+
+`systemctl enable httpd` 
+`systemctl start httpd`
+
+To install PHP and it’s depemdencies
+
+`yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+ yum install yum-utils http://rpms.remirepo.net/enterprise/remi-release-8.rpm
+ yum module list php
+ yum module reset php
+ yum module enable php:remi-7.4
+ yum install php php-opcache php-gd php-curl php-mysqlnd
+ systemctl start php-fpm
+ systemctl enable php-fpm
+ setsebool -P httpd_execmem 1`
+
+
+Restart Apache
+
+`systemctl restart httpd`
+
+Download wordpress and copy wordpress to var/www/html
+
+  `mkdir wordpress
+  cd   wordpress
+  sudo wget http://wordpress.org/latest.tar.gz
+  sudo tar xzvf latest.tar.gz
+  sudo rm -rf latest.tar.gz
+  cp wordpress/wp-config-sample.php wordpress/wp-config.php
+  cp -R wordpress /var/www/html/`
+  
+Configure SELinux Policies
+
+`chown -R apache:apache /var/www/html/wordpress
+  sudo chcon -t httpd_sys_rw_content_t /var/www/html/wordpress -R
+  sudo setsebool -P httpd_can_network_connect=1`
+
 
 
 
