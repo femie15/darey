@@ -2,7 +2,11 @@
 
 Spin-up 2 server, one for wordpress web server and the other for MySQL database server, note the availability zones of the servers.
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project6/1-servers.PNG)
+
 Goto volumes and create 3 volume instances and attach them to the web-server.
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project6/2-setup-volume.PNG)
 
 then we can do `lsblk` on our terminal to view the attached volumes and `df -h` to view all mounts and free space on the server.
 
@@ -23,9 +27,17 @@ So, we repeat the process for "xvdg and xvdh"
 
 we can then run `lsblk` to view our volumes, each should now carry the number of partitions configured.
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project6/3-volumes.PNG)
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project6/4-xvdf.PNG)
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project6/5-fgh.PNG)
+
 we now install "LVM2" `yum install lvm2 -y`  (note, the -y flag is to auto respond yes to all promted questions)
 
 to confirm that it was successfully installed, we can perform `which lvm` and see it in the installed directory
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project6/6-install-yum.PNG)
 
 ### Create physical volumes
 
@@ -39,6 +51,8 @@ run `vgcreate webdata-vg /dev/xvdh1 /dev/xvdg1 /dev/xvdf1` to create a volume gr
 
 we can do `vgs` to view the volume group (it should show us the sum of all the physical volumes we added)
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project6/7-volume-group.PNG)
+
 ### Logical volume
 
 This helps us to manage our volume easily without any downtime.
@@ -51,9 +65,17 @@ We use lvcreate utility to create 2 logical volumes. apps-lv (Use half of the PV
 
 if we exhust the volume, we can create an additional physical volume, add it to our volume group by `vgextend` and add it to our logical volume by `lvextend` .
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project6/8-logical-volume.PNG)
+
 ## View Setup
 
 use `vgdisplay -v` you get the output below
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project6/9-phy-vgrp-logicvol.PNG)
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project6/10-vgdisplay.PNG)
+
+### File system
 
 Use mkfs.ext4 to format the logical volumes with ext4 filesystem
 
@@ -61,6 +83,9 @@ Use mkfs.ext4 to format the logical volumes with ext4 filesystem
 `mkfs -t ext4 /dev/webdata-vg/logs-lv` OR 
 
 `mkfs.ext4 /dev/webdata-vg/apps-lv` and `mkfs.ext4 /dev/webdata-vg/logs-lv`
+
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project6/11-filesystem.PNG)
 
 ### create directories for web files
 
@@ -89,14 +114,19 @@ We then need to backup the content in to the recovery placeholder using "rsync"
 we can then mount the volume 
 `mount /dev/webdata-vg/logs-lv /var/log`
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project6/12-mount.PNG)
+
 at this point the contents in "/var/log" is already deleted, we then need to restore it back. 
 `rsync -av /home/recovery/logs/. /var/log`. we can do `df -h` to view the mounted volume
 
+### fstab
 We can now update /etc/fstab file so that the mount configuration will persist after restart of the server.
 The UUID of the device will be used to update the /etc/fstab file
 
 `UUID=5a75cdef-44e3-4222-8b6a-45139cb31eee /var/www/html ext4 defaults 0 0` 
 `UUID=d7513fc9-56a5-4c28-adaf-89b543ceed24 /var/log ext4 defaults 0 0`
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project6/13-fstab.PNG)
 
 ### Test the configuration and reload the daemon
 
@@ -105,9 +135,12 @@ The UUID of the device will be used to update the /etc/fstab file
 
 we can verify setup by running `df -h`
 
+
 ## DB server
 
 Repeat the same steps as for the Web Server, but instead of apps-lv create db-lv and mount it to /db directory instead of /var/www/html/
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project6/15-fstab-db.PNG)
 
 # Install WordPress on your Web Server EC2
 
@@ -156,6 +189,13 @@ Finally, start Apache web server for PHP to work with Apache web server.
 
 `systemctl start httpd`
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project6/16-php-install.PNG)
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project6/17-redhat.PNG)
+
+### security group
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project6/18-db-securityGroup.PNG)
 
 ### Download wordpress and copy wordpress to var/www/html
 
@@ -224,7 +264,10 @@ Visit the wp-config.php file and edit the database name, username and password a
  
 `mysql -u <username> -p -h <DB-Server-Private-IP-address>`
  e.g. `mysql -u myuser -p -h 172.31.19.42`
-
+ 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project6/19-dbFromClient.PNG)
+ 
+ 
  use this to rename the default landing page
  
  `mv /etc/httpd/conf.d/welcome.conf /etc/httpd/conf.d/welcome.conf_backup`
@@ -241,5 +284,15 @@ Configure SELinux Policies
  `setsebool -P httpd_can_network_connect_db 1`
 
  you can then visit the public IP address of the web-server and we should get the installation page for wordpress...
+  
+![apache](https://github.com/femie15/darey/blob/main/project%201/project6/20-wordpressInstaller.PNG)
+  
+ Wordpress dashboard
+ 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project6/21-dashboard.PNG)
+  
+ Wordpress website
+ 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project6/22-web.PNG)
  
  # Done
