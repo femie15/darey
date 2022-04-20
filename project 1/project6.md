@@ -19,5 +19,12 @@ we then use `w` to write and confirm the command with a yes `Y`,
 
 at this stage, it should show us that the operation is successfull.
 
+So, we repeat the process for "xvdg and xvdh"
+
+we can then run `lsblk` to view our volumes, each should now carry the number of partitions configured.
+
+we now install "LVM2" `yum install lvm2 -y`  (note, the -y flag is to auto respond yes to all promted questions)
+
+to confirm that it was successfully installed, we can perform `which lvm` and see it in the installed directory
 
 
