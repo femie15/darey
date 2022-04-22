@@ -232,9 +232,9 @@ Finally, start Apache web server for PHP to work with Apache web server.
 
 `mysql` 
 `CREATE DATABASE wordpress;` 
-`CREATE USER `myuser`@`<Web-Server-Private-IP-Address>` IDENTIFIED BY 'mypass';`  or `CREATE USER `myuser`@`%` IDENTIFIED WITH mysql_native_password BY 'mypass';`
+`CREATE USER 'myuser'@'<CIDR>' IDENTIFIED BY 'mypass;`  or `CREATE USER 'myuser'@'%' IDENTIFIED WITH mysql_native_password BY 'mypass';`
 
-`GRANT ALL ON wordpress.* TO 'myuser'@'<Web-Server-Private-IP-Address>';` or `GRANT ALL PRIVILEGES ON *.* TO 'myuser'@'%' WITH GRANT OPTION;`
+`GRANT ALL ON wordpress.* TO 'myuser'@'<Web-Server-Private-IP-CIDR>';` or `GRANT ALL PRIVILEGES ON *.* TO 'myuser'@'%' WITH GRANT OPTION;`
  
 `FLUSH PRIVILEGES;` 
 `SHOW DATABASES;` 
