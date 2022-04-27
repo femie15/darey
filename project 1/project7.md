@@ -246,98 +246,66 @@ Deploy the tooling website’s code to the Webserver.
  
  open TCP port 80 on the Web Servers.
  
+ in the root directory of the web server
  
+ disable SELinux by running `setenforce 0`
  
+ To make this change permanent – open following config file 
  
+ `vi /etc/sysconfig/selinux` and set "SELINUX=disabled" then restrt httpd with 
+ 
+ `systemctl start httpd`
+ 
+ Try to now access the web app via the public IP address. 
+ 
+ If it's not loading try to change 
+ 
+ 1. "https" to "http"
+ 2. check permissions to your "/var/www/html" folder
+ 
+ ### update db access
+ 
+Update the website’s configuration to connect to the database (in /var/www/html/functions.php file). `vi /var/www/html/functions.php`
 
-For logs, if we check the content, we notice it's not empty `ls /var/log`
+change the configuration from 
 
-We then need to backup the content in to the recovery placeholder using "rsync"
+to "$db = mysqli_connect('172.31.13.186', 'webaccess', 'password', 'tooling');"
 
-`rsync -av /var/log/. /home/recovery/logs/`
+### Mysql client
 
-we can then mount the volume 
-`mount /dev/webdata-vg/logs-lv /var/log`
+on the 3 webservers install mysql client `yum install mysql -y`
 
-![apache](https://github.com/femie15/darey/blob/main/project%201/project6/12-mount.PNG)
+then configure the database server security group to allow access to the NFS server Subnet CIDR
 
-at this point the contents in "/var/log" is already deleted, we then need to restore it back. 
-`rsync -av /home/recovery/logs/. /var/log`. we can do `df -h` to view the mounted volume
+![apache]()
 
-### fstab
-We can now update /etc/fstab file so that the mount configuration will persist after restart of the server.
-The UUID of the device will be used to update the /etc/fstab file
+in the mysql server goto `vi /etc/mysql/mysql.conf.d/mysqld.cnf`
 
-`UUID=5a75cdef-44e3-4222-8b6a-45139cb31eee /var/www/html ext4 defaults 0 0` 
-`UUID=d7513fc9-56a5-4c28-adaf-89b543ceed24 /var/log ext4 defaults 0 0`
+then restart mysql `systemctl restart mysql`
 
-![apache](https://github.com/femie15/darey/blob/main/project%201/project6/13-fstab.PNG)
+and edit the "bind-address" to "0.0.0.0" and "mysqlx-bind-address" to "0.0.0.0"
 
-### Test the configuration and reload the daemon
+Goto the web server and apply tooling-db.sql (from the tooling folder forked from github) script to your database using this command in 
 
-`mount -a` to test and 
-`systemctl daemon-reload` to reload
+`cd tooling`
 
-we can verify setup by running `df -h`
+`mysql -h <databse-private-ip> -u <db-username> -p <db-name> < tooling-db.sql`
 
+eg `mysql -h 172.31.13.186 -u webaccess -p tooling < tooling-db.sql` 
 
-## DB server
+we can now check the db server if the sql script was successful.
 
-Repeat the same steps as for the Web Server, but instead of apps-lv create db-lv and mount it to /db directory instead of /var/www/html/
+`mysql` `show databases;` `use tooling;` `select * from users;`
 
-![apache](https://github.com/femie15/darey/blob/main/project%201/project6/15-fstab-db.PNG)
+also run 
 
-# Install WordPress on your Web Server EC2
+INSERT INTO `users` (`id`, `username`, `password`, `email`, `user_type`, `status`) VALUES (2, "myuser", "5f4dcc3b5aa765d61d8327deb882cf99", "user@mail.com", "admin", "1");
+note: the encrypted password is "password"
 
-Update the repository `yum -y update` (for both web and database server: note this takes some time)
+Open the website in your browser http://<Web-Server-Public-IP-Address-or-Public-DNS-Name>/index.php and make sure you can login into the websute with myuser user.
 
-### install latest version of php
-
-install these repositories to get the versions of php
-
-`dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm` and 
-
-`dnf install dnf-utils http://rpms.remirepo.net/enterprise/remi-release-8.rpm`
-
-After the successful installation of yum-utils and Remi-packages, search for the PHP modules which are available for download by running the command.
- `dnf module list php` to get the list of php versions`
-
-The output indicates that the currently installed version of PHP is PHP 7.2. To install the newer release, PHP 7.4, reset the PHP modules.
-
-`dnf module reset php`
-
-Having reset the PHP modules, enable the PHP 7.4 module by running.
-
-`dnf module enable php:remi-7.4`
-
-Finally, install PHP, PHP-FPM (FastCGI Process Manager) and associated PHP modules using the command.
-
-`dnf install php php-opcache php-gd php-curl php-mysqlnd`
-
-We then check the php version to confirm `php -v` (we should get version ^7.4)
-
-we need to start and enable PHP-FPM on boot-up.
-
-`systemctl start php-fpm`
-
-`systemctl enable php-fpm`
-
-To check its status execute the command.
-
-`systemctl status php-fpm`
-
-To instruct SELinux to allow Apache to execute the PHP code via PHP-FPM run.
-
-`setsebool -P httpd_execmem 1`
-
-Finally, start Apache web server for PHP to work with Apache web server.
-
-`systemctl start httpd`
-
-![apache](https://github.com/femie15/darey/blob/main/project%201/project6/16-php-install.PNG)
-
-![apache](https://github.com/femie15/darey/blob/main/project%201/project6/17-redhat.PNG)
-
-### security group
-
-![apache](https://github.com/femie15/darey/blob/main/project%201/project6/18-db-securityGroup.PNG)
+if the default redhat landing page is still showing, then we need to rename the file below
+ 
+ `mv /etc/httpd/conf.d/welcome.conf /etc/httpd/conf.d/welcome.conf_rename`
+ 
+# CONGRATULATIONS
