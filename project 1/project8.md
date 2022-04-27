@@ -8,6 +8,8 @@
 
 Create an Ubuntu Server 20.04 EC2 instance and name it Project-8-apache-lb
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project8/1-servers.PNG)
+
 Open TCP port 80 on Project-8-apache-lb by creating an Inbound Rule in Security Group.
 
 Install Apache Load Balancer on Project-8-apache-lb server and configure it to point traffic coming to LB to both Web Servers
@@ -49,6 +51,10 @@ Make sure apache2 is up and running
         ProxyPass / balancer://mycluster/
         ProxyPassReverse / balancer://mycluster/`
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project8/2-LB.PNG)
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project8/3-LB%20web.PNG)
+
 ### Restart apache server
 
 ` systemctl restart apache2`
@@ -70,6 +76,9 @@ Open two ssh/Putty/terminal consoles for both Web Servers and run following comm
 
 `tail -f /var/log/httpd/access_log`
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project8/4-log1.PNG)
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project8/5-log2.PNG)
 
 ### Configure Local DNS Names Resolution
 
