@@ -1,6 +1,6 @@
 Spin-up 4 Redhat servers, 3 for web servers and the other for NFS server then spin up another Ubuntu server for database server, note the availability zones of the servers.
 
-![apache]()
+![apache](https://github.com/femie15/darey/blob/main/project%201/project7/1-instances.PNG)
 
 Goto volumes and create 3 volume instances and attach them to the NFS-server.
 
@@ -63,13 +63,13 @@ We use lvcreate utility to create 2 logical volumes. apps-lv (Use half of the PV
 
 if we exhust the volume, we can create an additional physical volume, add it to our volume group by `vgextend` and add it to our logical volume by `lvextend` .
 
-![apache]()
+![apache](https://github.com/femie15/darey/blob/main/project%201/project7/2-plvg.PNG)
 
 ## View Setup
 
 use `vgdisplay -v` you get the output below
 
-![apache]()
+![apache](https://github.com/femie15/darey/blob/main/project%201/project7/3-vgdisplay.PNG)
 
 
 ### File system
@@ -146,7 +146,9 @@ Check which port is used by NFS and open it using Security Groups (add new Inbou
 
 Important note: In order for NFS server to be accessible from your client, you must also open following ports: TCP 111, UDP 111, UDP 2049 and TCP 2049
 
-![apache]()
+![apache](https://github.com/femie15/darey/blob/main/project%201/project7/5-nfs%20ports.PNG)
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project7/6-sec%20group.PNG)
 
 # PART 2
 
@@ -169,6 +171,7 @@ Grant privileges
 
 To view the users we run `select user, host from mysql.user;`
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project7/4-mysql%20users.PNG)
 
 # Prepare the Web Servers
 
@@ -187,6 +190,8 @@ Mount /var/www/ and target the NFS server’s export for apps
 Verify that NFS was mounted successfully by running `df -h`. 
 
 when we add a file from one web server `touch /var/www/test.md`, it appears iin the NFS server and can be accessed from the other 2web servers as well using `ls /var/www/` we see the test.md file
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project7/7%20-%20same%20file%20accessed%20across%20web%20servers.PNG)
 
 Make sure that the changes will persist on Web Server after reboot:
 
@@ -277,9 +282,11 @@ on the 3 webservers install mysql client `yum install mysql -y`
 
 then configure the database server security group to allow access to the NFS server Subnet CIDR
 
-![apache]()
+![apache](https://github.com/femie15/darey/blob/main/project%201/project7/8-dbSecGrp.PNG)
 
 in the mysql server goto `vi /etc/mysql/mysql.conf.d/mysqld.cnf`
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project7/9-mysql.cnf.PNG)
 
 then restart mysql `systemctl restart mysql`
 
@@ -302,10 +309,14 @@ also run
 INSERT INTO `users` (`id`, `username`, `password`, `email`, `user_type`, `status`) VALUES (2, "myuser", "5f4dcc3b5aa765d61d8327deb882cf99", "user@mail.com", "admin", "1");
 note: the encrypted password is "password"
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project7/10-dbData.PNG)
+
 Open the website in your browser http://<Web-Server-Public-IP-Address-or-Public-DNS-Name>/index.php and make sure you can login into the websute with myuser user.
 
 if the default redhat landing page is still showing, then we need to rename the file below
  
- `mv /etc/httpd/conf.d/welcome.conf /etc/httpd/conf.d/welcome.conf_rename`
+ `mv /etc/httpd/conf.d/welcome.conf /etc/httpd/conf.d/welcome.conf_rename` and then restart the web server `systemctl restart httpd`
  
 # CONGRATULATIONS
+
+ ![apache](https://github.com/femie15/darey/blob/main/project%201/project7/11-done.PNG)
