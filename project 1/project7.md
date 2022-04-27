@@ -1,8 +1,8 @@
-Spin-up 2 server, one for wordpress web server and the other for MySQL database server, note the availability zones of the servers.
+Spin-up 4 Redhat servers, 3 for web servers and the other for NFS server then spin up another Ubuntu server for database server, note the availability zones of the servers.
 
 ![apache](https://github.com/femie15/darey/blob/main/project%201/project6/1-servers.PNG)
 
-Goto volumes and create 3 volume instances and attach them to the web-server.
+Goto volumes and create 3 volume instances and attach them to the NFS-server.
 
 ![apache](https://github.com/femie15/darey/blob/main/project%201/project6/2-setup-volume.PNG)
 
@@ -37,6 +37,8 @@ to confirm that it was successfully installed, we can perform `which lvm` and se
 
 ![apache](https://github.com/femie15/darey/blob/main/project%201/project6/6-install-yum.PNG)
 
+run `lvmdiskscan` to see the partitions.
+
 ### Create physical volumes
 
 we use the command `pvcreate /dev/xvdf1 /dev/xvdg1 /dev/xvdh1` to create physical volumes and use `pvs` to check the physical volumes
@@ -57,51 +59,82 @@ This helps us to manage our volume easily without any downtime.
 
 We use lvcreate utility to create 2 logical volumes. apps-lv (Use half of the PV size), and logs-lv Use the remaining space of the PV size
 
-`lvcreate -n apps-lv -L 14G webdata-vg` for the application volume and
+`lvcreate -n lv-apps -L 9G webdata-vg` for the application volume and
 
-`lvcreate -n logs-lv -L 14G webdata-vg` for the logs, we can do `lvs` to see the logical volumes
+`lvcreate -n lv-logs -L 9G webdata-vg` for the logs, we can do `lvs` to see the logical volumes
+
+`lvcreate -n lv-opt -L 9G webdata-vg` for the opt, we can do `lvs` to see the logical volumes
 
 if we exhust the volume, we can create an additional physical volume, add it to our volume group by `vgextend` and add it to our logical volume by `lvextend` .
 
-![apache](https://github.com/femie15/darey/blob/main/project%201/project6/8-logical-volume.PNG)
+![apache]()
 
 ## View Setup
 
 use `vgdisplay -v` you get the output below
 
-![apache](https://github.com/femie15/darey/blob/main/project%201/project6/9-phy-vgrp-logicvol.PNG)
+![apache]()
 
-![apache](https://github.com/femie15/darey/blob/main/project%201/project6/10-vgdisplay.PNG)
 
 ### File system
 
 Use mkfs.ext4 to format the logical volumes with ext4 filesystem
 
-`mkfs -t ext4 /dev/webdata-vg/apps-lv` 
-`mkfs -t ext4 /dev/webdata-vg/logs-lv` OR 
+`mkfs -t xfs /dev/webdata-vg/lv-apps`
 
-`mkfs.ext4 /dev/webdata-vg/apps-lv` and `mkfs.ext4 /dev/webdata-vg/logs-lv`
+`mkfs -t xfs /dev/webdata-vg/lv-logs`
+ 
+`mkfs -t xfs /dev/webdata-vg/lv-opt`
 
 
 ![apache](https://github.com/femie15/darey/blob/main/project%201/project6/11-filesystem.PNG)
 
-### create directories for web files
+### create mount points for apps, logs and opt.
 
-Create /var/www/html directory to store website files, (it's good to check if the directory exists first before creating.
+Create directory to store files, (it's good to check if the directory exists first before creating.
 
-`mkdir -p /var/www/html` (the `-p` flag creates the directories that are not currently existing)
+`mkdir -p /mnt/apps` (the `-p` flag creates the directories that are not currently existing)
 
-### Logs directory
+`mkdir -p /mnt/logs`
 
-Create /home/recovery/logs to store backup of log data
-
-`mkdir -p /home/recovery/logs`
+`mkdir -p /mnt/opt`
 
 ### mount volumes
 
-Check if the directory "/var/www/html" is empty (mounting will automatically delete existing content in the directory)
+Check if the directories created are empty (mounting will automatically delete existing content in the directory)
+then we can mount in the empty directory 
 
-then we can mount in the empty directory ` mount /dev/webdata-vg/apps-lv /var/www/html`
+'mount /dev/webdata-vg/lv-apps /mnt/apps`
+
+'mount /dev/webdata-vg/lv-logs /mnt/logs`
+
+'mount /dev/webdata-vg/lv-opt /mnt/opt`
+
+
+### Install NFS server, configure it to start on reboot and make sure it is u and running
+`sudo yum -y update` 
+`sudo yum install nfs-utils -y` 
+`sudo systemctl start nfs-server.service` 
+`sudo systemctl enable nfs-server.service` 
+`sudo systemctl status nfs-server.service` 
+
+
+# PART 2
+## DB server
+
+`apt update` to update the server
+
+`apt install mysql-server -y`
+
+
+
+
+
+
+
+
+
+
 
 For logs, if we check the content, we notice it's not empty `ls /var/log`
 
