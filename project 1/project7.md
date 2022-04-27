@@ -140,11 +140,13 @@ on ketboard do "Esc + :wq!"
 
 `exportfs -arv`
 
+Check which port is used by NFS and open it using Security Groups (add new Inbound Rule)
 
+`rpcinfo -p | grep nfs`
 
+Important note: In order for NFS server to be accessible from your client, you must also open following ports: TCP 111, UDP 111, UDP 2049 and TCP 2049
 
-
-
+![apache]()
 
 # PART 2
 
@@ -167,6 +169,55 @@ Grant privileges
 
 To view the users we run `select user, host from mysql.user;`
 
+
+# Prepare the Web Servers
+
+This approach will make our Web Servers stateless, which means we will be able to add new ones or remove them whenever we need, and the integrity of the data (in the database and on NFS) will be preserved.
+
+Install NFS client on the 3web servers and repeat the processes below
+
+`yum install nfs-utils nfs4-acl-tools -y`
+
+Mount /var/www/ and target the NFS server’s export for apps
+
+`mkdir /var/www`
+
+`mount -t nfs -o rw,nosuid 172.31.6.219:/mnt/apps /var/www`
+ 
+Verify that NFS was mounted successfully by running `df -h`. 
+
+when we add a file from one web server `touch /var/www/test.md`, it appears iin the NFS server and can be accessed from the other 2web servers as well using `ls /var/www/` we see the test.md file
+
+
+Make sure that the changes will persist on Web Server after reboot:
+
+ `vi /etc/fstab`
+ 
+add following line
+
+"172.31.6.219:/mnt/apps /var/www nfs defaults 0 0"
+
+### Install Remi’s repository, Apache and PHP
+
+`yum install httpd -y` 
+
+`dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm` 
+
+` dnf install dnf-utils http://rpms.remirepo.net/enterprise/remi-release-8.rpm` 
+
+` dnf module reset php` 
+
+` dnf module enable php:remi-7.4` 
+
+` dnf install php php-opcache php-gd php-curl php-mysqlnd` 
+
+` systemctl start php-fpm` 
+
+` systemctl enable php-fpm` 
+
+`setsebool -P httpd_execmem 1` 
+
+Repeat steps for all Web Servers.
 
 
 
