@@ -182,12 +182,11 @@ Mount /var/www/ and target the NFS server’s export for apps
 
 `mkdir /var/www`
 
-`mount -t nfs -o rw,nosuid 172.31.6.219:/mnt/apps /var/www`
+`mount -t nfs -o rw,nosuid 172.31.6.219:/mnt/apps /var/www` "<NFS-Server-Private-IP-Address>"
  
 Verify that NFS was mounted successfully by running `df -h`. 
 
 when we add a file from one web server `touch /var/www/test.md`, it appears iin the NFS server and can be accessed from the other 2web servers as well using `ls /var/www/` we see the test.md file
-
 
 Make sure that the changes will persist on Web Server after reboot:
 
@@ -196,6 +195,8 @@ Make sure that the changes will persist on Web Server after reboot:
 add following line
 
 "172.31.6.219:/mnt/apps /var/www nfs defaults 0 0"
+
+do these for one of the web servers
 
 ### Install Remi’s repository, Apache and PHP
 
@@ -219,12 +220,35 @@ add following line
 
 Repeat steps for all Web Servers.
 
+Locate the log folder for Apache on the Web Server and mount it to NFS server’s export for logs. Repeat the "vi /etc/fstab" step to make sure the mount point will persist after reboot.
 
+mount the web server log directory to the NFS server log directory
 
+`mount -t nfs -o rw,nosuid 172.31.6.219:/mnt/logs /var/log/httpd`
 
+Make sure that the changes will persist on Web Server after reboot:
 
+ `vi /etc/fstab`
+ 
+add following line
 
+"172.31.6.219:/mnt/logs /var/log/httpd nfs defaults 0 0" this is the NFS internal IP Address.
+and repeat the process for all web server.
 
+run `yum install git` and `git init` for the web servers and fork a repository such as "https://github.com/darey-io/tooling.git" into it
+Deploy the tooling website’s code to the Webserver.
+
+`git clone https://github.com/darey-io/tooling.git` and then ls into the directory to see the html folder.
+
+ Ensure that the html folder from the repository is deployed to /var/www/html
+ 
+ `ls  tooling` then do `cp -R html/. /var/www/html` to copy the contents (-R means recurrsive)
+ 
+ open TCP port 80 on the Web Servers.
+ 
+ 
+ 
+ 
 
 For logs, if we check the content, we notice it's not empty `ls /var/log`
 
