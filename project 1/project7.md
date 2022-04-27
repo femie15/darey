@@ -1,10 +1,8 @@
 Spin-up 4 Redhat servers, 3 for web servers and the other for NFS server then spin up another Ubuntu server for database server, note the availability zones of the servers.
 
-![apache](https://github.com/femie15/darey/blob/main/project%201/project6/1-servers.PNG)
+![apache]()
 
 Goto volumes and create 3 volume instances and attach them to the NFS-server.
-
-![apache](https://github.com/femie15/darey/blob/main/project%201/project6/2-setup-volume.PNG)
 
 then we can do `lsblk` on our terminal to view the attached volumes and `df -h` to view all mounts and free space on the server.
 
@@ -24,8 +22,6 @@ at this stage, it should show us that the operation is successfull.
 So, we repeat the process for "xvdg and xvdh"
 
 we can then run `lsblk` to view our volumes, each should now carry the number of partitions configured.
-
-![apache](https://github.com/femie15/darey/blob/main/project%201/project6/3-volumes.PNG)
 
 ![apache](https://github.com/femie15/darey/blob/main/project%201/project6/4-xvdf.PNG)
 
@@ -112,21 +108,64 @@ then we can mount in the empty directory
 
 
 ### Install NFS server, configure it to start on reboot and make sure it is u and running
-`sudo yum -y update` 
+`sudo yum -y update`  (This process takes time, so we can go and run the database process and ccome back to it.)
 `sudo yum install nfs-utils -y` 
 `sudo systemctl start nfs-server.service` 
 `sudo systemctl enable nfs-server.service` 
 `sudo systemctl status nfs-server.service` 
 
+### Make sure we set up permission that will allow our Web servers to read, write and execute files on NFS:
+
+`sudo chown -R nobody: /mnt/apps` 
+`sudo chown -R nobody: /mnt/logs` 
+`sudo chown -R nobody: /mnt/opt`
+
+`sudo chmod -R 777 /mnt/apps` 
+`sudo chmod -R 777 /mnt/logs` 
+`sudo chmod -R 777 /mnt/opt` 
+
+`sudo systemctl restart nfs-server.service` 
+
+### Configure access to NFS for clients within the same subnet (example of Subnet CIDR – 172.31.32.0/20 ):
+
+`vi /etc/exports`
+
+and insert the following...
+
+/mnt/apps <Subnet-CIDR>(rw,sync,no_all_squash,no_root_squash)
+/mnt/logs <Subnet-CIDR>(rw,sync,no_all_squash,no_root_squash)
+/mnt/opt <Subnet-CIDR>(rw,sync,no_all_squash,no_root_squash)
+
+on ketboard do "Esc + :wq!"
+
+`exportfs -arv`
+
+
+
+
+
+
 
 # PART 2
+
 ## DB server
 
 `apt update` to update the server
 
 `apt install mysql-server -y`
 
+`mysql` 
 
+Create a database called tooling `create database tooling;`
+
+create user called webaccess ensure we grant permission to webaccess user on tooling database to do anything only from the webservers subnet cidr (This can be found in aws instance > networking > subnetID > IPV4 CIDR)
+
+`create user 'webaccess'@'172.31.0.0/20' identified by 'password';`
+
+Grant privileges 
+`grant all privileges on tooling.* to 'webaccess'@'172.31.0.0/20';`
+
+To view the users we run `select user, host from mysql.user;`
 
 
 
