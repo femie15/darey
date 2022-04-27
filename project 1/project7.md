@@ -1,3 +1,7 @@
+# Shared NFS server and DB server by 3 web servers
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project7/archi.PNG)
+
 Spin-up 4 Redhat servers, 3 for web servers and the other for NFS server then spin up another Ubuntu server for database server, note the availability zones of the servers.
 
 ![apache](https://github.com/femie15/darey/blob/main/project%201/project7/1-instances.PNG)
