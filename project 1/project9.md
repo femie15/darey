@@ -81,13 +81,15 @@ go back to the dashboard and click "manage jenkins" then "configuration system" 
   
 copy the content of the SSH key we use to login to our instance into the key field, then type "NFS" in the Name field, Hostname has "<Private-IP-address-of-the-NFS-server>"
 
-  Username field "ec2-user", and remote directory field "/mnt/apps".
+Username field "ec2-user", and remote directory field "/mnt/apps".
   
-  Click "test configuration" to give a "Success" test response, then click "Save".
+Click "test configuration" to give a "Success" test response, then click "Save".
   
-  Save the configuration, open your Jenkins job/project configuration page and add another one "Post-build Action"
-  
-  Save this configuration and go ahead, change something in README.MD file in your GitHub Tooling repository.
+Save the configuration, open your Jenkins job/project configuration page and add another one "Post-build Action" Save this configuration and go ahead, 
+    
+Lastly, from the terminal, goto the NFS server, run `chown -R nobody:nobody /mnt` (or `chown -R nobody:nogroup /mnt` for centos server) and `chmod -R 777 /mnt` (for permission to jenkins)   
+    
+change something in README.MD file in your GitHub Tooling repository.
 
 Webhook will trigger a new job and in the "Console Output" of the job you will find something like this:
 
