@@ -1,10 +1,12 @@
 # NGINX load balancer
 
-![apache](https://github.com/femie15/darey/blob/main/project%201/project10/archi.PNG)
+![apache](https://github.com/femie15/darey/blob/main/project10/archi.PNG)
 
 ### Free URL
 
 Goto https://my.freenom.com/domains.php -> Register new domain
+
+![apache](https://github.com/femie15/darey/blob/main/project10/1-domainName.PNG)
 
 the type a domain name with a free extention e.g. ccchf.tk in the space and select checkout.
 
@@ -15,6 +17,8 @@ then follow the instruction to finish the registration.
 Spin up an Ubuntu server and ssh into it.then perform these.
 
 `apt update && apt install nginx -y` then
+
+![apache](https://github.com/femie15/darey/blob/main/project10/2-install.PNG)
 
 `systemctl enable nginx && systemctl start nginx` (this is to make the nginx server to auto start with the server instance.
 
@@ -40,6 +44,8 @@ server {
 #comment out this line
 #       include /etc/nginx/sites-enabled/*;`
 
+![apache](https://github.com/femie15/darey/blob/main/project10/3-config.PNG)
+
 we can then remove the default nginx configuration 
 
 `rm -f /etc/nginx/sites-enabled/default`
@@ -53,6 +59,8 @@ now we currently dont have any file in the site-enabled directory. go into the d
 we can now link our  "/etc/nginx/sites-available/load_balancer.conf" to "/etc/nginx/sites-enabled" so that nginx can access the configuration.
 
 `ln -s ../sites-available/load_balancer.conf .` (The last "." means "in this directory")
+
+![apache](https://github.com/femie15/darey/blob/main/project10/4-link.PNG)
 
 now when we do `ls` we can now view the load_balancer.conf file. then reload Nginx.
 
@@ -94,6 +102,7 @@ we now get a prompt to either redirect to secure https access, we select "2" to 
 
 we then see a success message, we then go to the website to view if the configuration of certificate works well.
 
+![apache](https://github.com/femie15/darey/blob/main/project10/5-web.PNG)
 
 ### Cron Job setting for renewal 
 
