@@ -1,6 +1,6 @@
 # ANSIBLE
 
-![apache](https://github.com/femie15/darey/blob/main/project11/archi.PNG)
+![apache](https://github.com/femie15/darey/blob/main/project%201/project11/archi.PNG)
 
 ### installation
 
@@ -14,16 +14,26 @@ We can also install our ansible on the same jenkins server (Rename the server to
 
 After the installation is done, check your Ansible version by running `ansible --version`
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project11/1-ansibleVersion.PNG)
+
 then we go to our jenkins GUI and create a "new item" give it a name of "ansible" and select "free-style project" then click "ok"
 
 in the next view, under the Source Code Management tab, click "git" and enter github https url for the ansible repository, then change the branch to "*/main".
 
 under Build Triggers check the box "GitHub hook trigger for GITScm polling", then click "Post-build Actions" and select "Archive the artifacts" and in the  "Files to archive"
-field enter "**" (save all files). Now click save to save the configuration then on the side navigation bar, click "Build now", The first build should be successful now,
+field enter "**" (save all files). 
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project11/2-ansibleConfig.PNG)
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project11/3-autoBuild.PNG)
+
+Now click save to save the configuration then on the side navigation bar, click "Build now", The first build should be successful now,
 You can go ahead to change the Readme.txt file on github and it should automatically build on jenkins.
 
 make sure that builds starts automatically and Jenkins saves the files (build artifacts) in following folder
 `ls /var/lib/jenkins/jobs/ansible/builds/<build_number>/archive/` (eg. `ls /var/lib/jenkins/jobs/ansible/builds/2/archive`)
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project11/4-build.PNG)
 
 Now we have the initial architechture (In the first image) setup.
 
@@ -43,6 +53,8 @@ Note: Give your branches descriptive and comprehensive names, for example, if yo
 – include ticket number (e.g. proj-11) in the name of your branch and add a topic and a brief description what this branch is about – a bugfix, hotfix, feature, release (e.g. feature/proj-11-ansible)
 
 `git checkout -b proj-11`
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project11/5-gitBranch.PNG)
 
 Create a directory and name it "playbooks" – it will be used to store all your playbook files.
 Create a directory and name it "inventory" – it will be used to keep your hosts organised.
@@ -73,6 +85,8 @@ from your local machine move the ssh key to the ansible server
 
 `scp -i femie.pem femie.pem ubuntu@54.226.126.86:~/shell`
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project11/6-pem.PNG)
+
 Now, ssh into your Jenkins-Ansible server using ssh-agent
 the file was uploaded with name "shell", now rename to "femie.pem" `mv shell femie.pem`
 and run these
@@ -80,13 +94,17 @@ and run these
 " eval `ssh-agent -s` "
 `ssh-add femie.pem`
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project11/7-pem2.PNG)
+
 Confirm the key has been added with the command below, you should see the name of your key
 
 `ssh-add -l` 
 
 `ssh -A ubuntu@public-ip` from the local into the jenkins server, 
 
-`ssh -A ubuntu@private-ip` from the jenkins server into other servers (the pem file made this possible.
+`ssh -A ubuntu@private-ip` from the jenkins server into other (ubuntu) servers (the pem file made this possible.
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project11/8-remoteAccess.PNG)
 
 The Load Balancer user is ubuntu and user for RHEL-based servers is ec2-user.
 
@@ -154,12 +172,16 @@ use git commands to add, commit and push your branch to GitHub.
   
 Create a Pull request (PR) on github
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project11/9-pullRequest.PNG)
+  
 Wear a hat of another developer for a second, and act as a reviewer.
 
 If the reviewer is happy with your new feature development, merge the code to the master branch.
   
 Once the merge is completed on github, jenkins will start building, we can now see the new builds both on jenkins and from our terminal.
-  
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project11/10-jenkinsServerload.PNG)
+
 ### terminal
   
 Head back on your terminal, checkout from the feature branch into the master, and pull down the latest changes.
@@ -178,8 +200,14 @@ and run `git pull` to maake our main branch up to date with the origin.
   
 ansible-playbook -i /var/lib/jenkins/jobs/ansible/builds/4/archive/inventory/dev.yml /var/lib/jenkins/jobs/ansible/builds/4/archive/playbooks/common.yml
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project11/11-jenkins.PNG)
+  
 afterwards you can go to each of the servers and check if wireshark has been installed by running `which wireshark` or `wireshark --version`
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project11/11-wireshark.PNG)
+  
 the updated with Ansible architecture now looks like this:
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project11/12-j_archi.PNG)
+  
  ## Congratulations !!!
