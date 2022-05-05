@@ -88,17 +88,98 @@ Confirm the key has been added with the command below, you should see the name o
 
 `ssh -A ubuntu@private-ip` from the jenkins server into other servers (the pem file made this possible.
 
+The Load Balancer user is ubuntu and user for RHEL-based servers is ec2-user.
 
+Update your inventory/dev.yml file with this snippet of code:
 
+`[nfs]
+<NFS-Server-Private-IP-Address> ansible_ssh_user='ec2-user'
 
+[webservers]
+<Web-Server1-Private-IP-Address> ansible_ssh_user='ec2-user'
+<Web-Server2-Private-IP-Address> ansible_ssh_user='ec2-user'
 
+[db]
+<Database-Private-IP-Address> ansible_ssh_user='ec2-user' 
 
+[lb]
+<Load-Balancer-Private-IP-Address> ansible_ssh_user='ubuntu'`
 
+### Ansible instructions
 
+It is time to start giving Ansible the instructions on what you needs to be performed on all servers listed in inventory/dev.
 
+In common.yml playbook you will write configuration for repeatable, re-usable, and multi-machine tasks that is common to systems within the infrastructure.
 
+Update your playbooks/common.yml file with following code:
 
+`---
+- name: update web, nfs and db servers
+  hosts: webservers, nfs, db
+  remote_user: ec2-user
+  become: yes
+  become_user: root
+  tasks:
+    - name: ensure wireshark is at the latest version
+      yum:
+        name: wireshark
+        state: latest
 
+- name: update LB server
+  hosts: lb
+  remote_user: ubuntu
+  become: yes
+  become_user: root
+  tasks:
+    - name: Update apt repo
+      apt: 
+        update_cache: yes
 
+    - name: ensure wireshark is at the latest version
+      apt:
+        name: wireshark
+        state: latest`
 
+### Update GIT with the latest code
 
+use git commands to add, commit and push your branch to GitHub.
+
+`git status`
+
+`git add <selected files>` e.g. `git add .` Note: "." means all
+
+`git commit -m "commit message" `
+  
+`git push origin proj-11`
+  
+Create a Pull request (PR) on github
+
+Wear a hat of another developer for a second, and act as a reviewer.
+
+If the reviewer is happy with your new feature development, merge the code to the master branch.
+  
+Once the merge is completed on github, jenkins will start building, we can now see the new builds both on jenkins and from our terminal.
+  
+### terminal
+  
+Head back on your terminal, checkout from the feature branch into the master, and pull down the latest changes.
+  
+`git checkout main`
+  
+and run `git pull` to maake our main branch up to date with the origin.
+  
+ We should have a remote explorer extention on our VS Code (search microsofts' "Remote Development pack")
+  
+ ### Run ansible 
+  
+ confirm if you can connect to the servers from the jenkins server 
+  
+`ssh ubuntu@<private IP>` for Ubuntu servers and `ssh ec2-user@<private IP>` RHEL servers
+  
+ansible-playbook -i /var/lib/jenkins/jobs/ansible/builds/4/archive/inventory/dev.yml /var/lib/jenkins/jobs/ansible/builds/4/archive/playbooks/common.yml
+
+afterwards you can go to each of the servers and check if wireshark has been installed by running `which wireshark` or `wireshark --version`
+
+the updated with Ansible architecture now looks like this:
+
+ ## Congratulations !!!
