@@ -12,19 +12,25 @@ Change permissions to this directory, so Jenkins could (access and) save files t
 
 Go to Jenkins "web console -> Manage Jenkins -> Manage Plugins" -> on "Available tab" search for "Copy Artifact" and install this plugin without restarting Jenkins
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project12/1-install-copy-artifact.PNG)
+
 Create a "new item" (Freestyle project) and name it "save_artifacts".
 
 This project will be triggered by completion of your existing ansible project. Configure it accordingly:
 
 You can configure number of builds to keep in order to save space on the server, for example, you might want to keep only last 2 or 5 build results. You can also make this change to your ansible job.
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project12/2-config.PNG)
+
 The main idea of "save_artifacts" (item name) project is to save artifacts into "/home/ubuntu/ansible-config-artifact" directory. 
 To achieve this, create a Build step and choose "Copy artifacts" from other project, specify ansible as a source project and "/home/ubuntu/ansible-config-artifact" as a target directory.
 
- You can configure number of builds to keep in order to save space on the server, for example, you might want to keep only last 2 or 5 build results. You can also make this change to your ansible job.
+![apache](https://github.com/femie15/darey/blob/main/project%201/project12/3-config-cntd.PNG)
 
 Test your set up by making some change in README.MD file inside your ansible-config-mgt repository (right inside master branch).
 If both Jenkins jobs have completed one after another – you shall see your files inside "/home/ubuntu/ansible-config-artifact" directory and it will be updated with every commit to your master branch.
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project12/4-updated.PNG)
 
 ## REFACTOR ANSIBLE CODE BY IMPORTING OTHER PLAYBOOKS INTO SITE.YML
 
@@ -37,13 +43,15 @@ Create a new folder in root of the repository and name it "static-assignments". 
 
 Move "common.yml" file into the newly created "static-assignments" folder.
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project12/5-directory.PNG)
+
 Inside "site.yml" file, import "common.yml" playbook.
 
 `---
 - hosts: all
 - import_playbook: ../static-assignments/common.yml`
 
-The code above uses built in import_playbook Ansible module.
+The code above uses built in "import_playbook" Ansible module.
 
 ### Run ansible-playbook command against the dev environment
 
@@ -75,8 +83,7 @@ Since you need to apply some tasks to your dev servers and wireshark is already 
       state: absent
       autoremove: yes
       purge: yes
-      autoclean: yes
-      ```
+      autoclean: yes```
 
 update "site.yml" with "- import_playbook: ../static-assignments/common-del.yml" instead of "- import_playbook: ../static-assignments/common.yml" and run it against dev servers:
 
@@ -86,15 +93,23 @@ do `git add.` to add all changes, `git commit -m "delete wireshark"` to commit t
 
 now we have our "ansible-config-artifact" directory filled with the neccessary files and playbook.
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project12/6-uploads.PNG)
+
 ### we need to point our ansible config file to the inventory directory
 
-so we go to the ansible config file `vi /etc/ansible/ansible.cfg` and edit (point) the inventory directory to "/home/ubuntu/ansible-config-artifact/inventory"
+so we go to the ansible config file `vi /etc/ansible/ansible.cfg` and edit (point) the "inventory" directory pointer to "/home/ubuntu/ansible-config-artifact/inventory"
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project12/7-inventory.PNG)
 
 now run `ansible all -m ping` to ping all the listed hosts if they are reachable.
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project12/8-ping-servers.PNG)
 
 after successfully pinging the hosts, 
 
 ensure you are in the directory "/home/ubuntu/ansible-config-artifact" and run `ansible-playbook -i inventory/dev.yml playbooks/site.yml`
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project12/9-delete-wireshark.PNG)
 
 Make sure that wireshark is deleted on all the servers by ssh-ing into the servers and running `wireshark --version` or `which wireshark` on the servers.
 
@@ -119,6 +134,8 @@ Note: You can choose either way, but since you store all your codes in GitHub, i
 
 The entire folder structure should look like below, but if you create it manually – you can skip creating tests, files, and vars or remove them if you used ansible-galaxy (in ansible server)
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project12/10-directories.PNG)
+
 Update your inventory "ansible-config-artifact/inventory/uat.yml" file with IP addresses of your 2 UAT Web servers
 
 `[uat-webservers]
@@ -127,9 +144,13 @@ Update your inventory "ansible-config-artifact/inventory/uat.yml" file with IP a
  
 ### Note: Ensure the ansible server can ssh into the uat web servers.
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project12/11-ssh-uat.PNG)
+
 ### The webserver directory must be created in the "roles" directory.
 
 In "/etc/ansible/ansible.cfg" file uncomment "roles_path" string and provide a full path to your roles directory "roles_path = /home/ubuntu/ansible-config-artifact/roles", so Ansible could know where to find configured roles.
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project12/12-role-path.PNG)
 
 It is time to start adding some logic to the webserver role. Go into "tasks" directory, and within the "main.yml" file, start writing configuration tasks to do the following:
 
@@ -173,8 +194,7 @@ It is time to start adding some logic to the webserver role. Go into "tasks" dir
   become: true
   ansible.builtin.file:
     path: /var/www/html/html
-    state: absent
-```
+    state: absent```
 
 ###Reference ‘Webserver’ role
  
@@ -184,8 +204,7 @@ Within the "static-assignments" folder, create a new assignment(file) for uat-we
  ---
 - hosts: uat-webservers
   roles:
-     - webserver
- ```
+     - webserver```
  
 The entry point to our ansible configuration is the "site.yml" file. Therefore, you need to refer your "uat-webservers.yml" role inside "site.yml".
 So, we should have this in "site.yml"
@@ -196,8 +215,7 @@ So, we should have this in "site.yml"
 - import_playbook: ../static-assignments/common.yml
 
 - hosts: uat-webservers
-- import_playbook: ../static-assignments/uat-webservers.yml
- ```
+- import_playbook: ../static-assignments/uat-webservers.yml```
  
 Now commit your changes, create a Pull Request and merge them to master branch, make sure webhook triggered two consequent Jenkins jobs, they ran successfully and copied all the files to your Jenkins-Ansible server into "/home/ubuntu/ansible-config-artifact/" directory.
 
@@ -208,23 +226,19 @@ Now run the playbook against your uat inventory
 `ansible-playbook -i /home/ubuntu/ansible-config-artifact/inventory/uat.yml /home/ubuntu/ansible-config-artifact/playbooks/site.yml`
  
 and see what happens:
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project12/12-run.PNG)
  
 You should be able to see both of your UAT Web servers configured and you can try to reach them from your browser:
 
 "http://<Web1-UAT-Server-Public-IP-or-Public-DNS-Name>/index.php" or "http://<Web2-UAT-Server-Public-IP-or-Public-DNS-Name>/index.php"
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project12/13.PNG)
  
 If the redhat default page is showing, then we can configure it to automatically route to index.php page.
  
 Your Ansible architecture now looks like this:
 
-
+![apache](https://github.com/femie15/darey/blob/main/project%201/project12/archi.PNG)
  
- 
- 
- 
-
-
-
-
-
-
+# Congratulations
