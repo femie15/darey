@@ -58,7 +58,7 @@ The code above uses built in "import_playbook" Ansible module.
 Since you need to apply some tasks to your dev servers and wireshark is already installed
  you can go ahead and create another playbook under static-assignments and name it "common-del.yml". In this playbook, configure deletion of wireshark utility.
 
-```
+~~~
 ---
 - name: update web, nfs and db servers
   hosts: webservers, nfs
@@ -83,7 +83,8 @@ Since you need to apply some tasks to your dev servers and wireshark is already 
       state: absent
       autoremove: yes
       purge: yes
-      autoclean: yes```
+      autoclean: yes
+~~~
 
 update "site.yml" with "- import_playbook: ../static-assignments/common-del.yml" instead of "- import_playbook: ../static-assignments/common.yml" and run it against dev servers:
 
@@ -194,17 +195,19 @@ It is time to start adding some logic to the webserver role. Go into "tasks" dir
   become: true
   ansible.builtin.file:
     path: /var/www/html/html
-    state: absent```
+    state: absent
+```
 
 ###Reference ‘Webserver’ role
  
 Within the "static-assignments" folder, create a new assignment(file) for uat-webservers "uat-webservers.yml". This is where you will reference the role. paste the code below.
  
- ```
+```
  ---
 - hosts: uat-webservers
   roles:
-     - webserver```
+     - webserver
+```
  
 The entry point to our ansible configuration is the "site.yml" file. Therefore, you need to refer your "uat-webservers.yml" role inside "site.yml".
 So, we should have this in "site.yml"
@@ -215,7 +218,8 @@ So, we should have this in "site.yml"
 - import_playbook: ../static-assignments/common.yml
 
 - hosts: uat-webservers
-- import_playbook: ../static-assignments/uat-webservers.yml```
+- import_playbook: ../static-assignments/uat-webservers.yml
+```
  
 Now commit your changes, create a Pull Request and merge them to master branch, make sure webhook triggered two consequent Jenkins jobs, they ran successfully and copied all the files to your Jenkins-Ansible server into "/home/ubuntu/ansible-config-artifact/" directory.
 
@@ -239,6 +243,6 @@ If the redhat default page is showing, then we can configure it to automatically
  
 Your Ansible architecture now looks like this:
 
-![apache](https://github.com/femie15/darey/blob/main/project%201/project12/archi.PNG)
+![apache](https://github.com/femie15/darey/blob/main/project%201/project12/archi.png)
  
 # Congratulations
