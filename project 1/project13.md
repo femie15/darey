@@ -33,15 +33,17 @@ Now enter these into the "env-vars.yml" file
           paths:
             - "{{ playbook_dir }}/../env-vars"
       tags:
-        - always```
+        - always ```
+  
   
 ### 3 things worth noting
   
 1. From Ansible version 2.8, the include module is deprecated and variants of include_* must be used. These are:
+  
 ```
 include_role
 include_tasks
-include_vars```
+include_vars ```
   
 In the same version, variants of import were also introduces, such as:
 
