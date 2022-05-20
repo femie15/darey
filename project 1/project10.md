@@ -28,10 +28,11 @@ We need to create a configuration file for our load balancer.
 
 and paste the config below...
 
-`#insert following configuration into http section
- upstream myproject {
-    server 172.31.13.12 weight=5;
-    server 172.31.15.162 weight=5;
+```
+#insert following configuration into http section
+ upstream web {
+    server <web1 server IP address> weight=5;
+    server <web2 server IP address> weight=5;
   }
 server {
     listen 80;
@@ -42,7 +43,8 @@ server {
     }
   }
 #comment out this line
-#       include /etc/nginx/sites-enabled/*;`
+#       include /etc/nginx/sites-enabled/*;
+```
 
 ![apache](https://github.com/femie15/darey/blob/main/project10/3-config.PNG)
 
@@ -54,17 +56,19 @@ We now need to confirm if the nginx is successfully configured by
 
 `nginx -t`
 
-now we currently dont have any file in the site-enabled directory. go into the directory `cd /etc/nginx/sites-enabled`
+now we currently dont have any file in the site-enabled directory. 
+
+go into the directory `cd /etc/nginx/sites-enabled`
 
 we can now link our  "/etc/nginx/sites-available/load_balancer.conf" to "/etc/nginx/sites-enabled" so that nginx can access the configuration.
 
-`ln -s ../sites-available/load_balancer.conf .` (The last "." means "in this directory")
+`ln -s ../sites-available/load_balancer.conf .` (The last "." means "in this directory") run `ll` to view the linkage
 
 ![apache](https://github.com/femie15/darey/blob/main/project10/4-link.PNG)
 
 now when we do `ls` we can now view the load_balancer.conf file. then reload Nginx.
 
-`systemctl reload nginx`
+`systemctl restart nginx` and `systemctl status nginx` to view
 
 We can then visit our domain name from our browser and it should load our website.
 
@@ -76,22 +80,23 @@ Install certbot and request for an SSL/TLS certificate. Make sure snapd service 
 
 ### Install certbot
 
-`apt install certbot -y` or `snap install --classic certbot -y`
+`snap install --classic certbot -y` 
 
-`apt install python3-certbot-nginx -y`
+(or `apt install certbot -y` and `apt install python3-certbot-nginx -y` (if snapd is not used))
 
 (Request your certificate (just follow the certbot instructions – you will need to choose which domain you want your certificate to be issued for, domain name will be looked up from nginx.conf file so make sure you have updated it earlier).
 
 `ln -s /snap/bin/certbot /usr/bin/certbot` [this is neccessary if we are using snap to install certbot].
-`certbot --nginx` )
+
+then run the certbot to create the certificate `certbot --nginx`
 
 we can check our config and reload nginx now.
 
 `nginx -t && nginx -s reload`
 
-Once everything is okay, we need to create a certificate for out domain. on the terminal,
+Once everything is okay, we need to create a certificate for our domain. on the terminal,
 
-`certbot --nginx -d ccchf.tk -d www.ccchf.tk`
+`certbot --nginx -d ccchf.tk -d www.ccchf.tk` (This step is if we didn't use snapd)
 
 a prompt requesting for email address will be up, we ca then enter an email address. we then press enter on keyboard and we are prompted to read terms and conditions.
 we can pree "A" to agree.
