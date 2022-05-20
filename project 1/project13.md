@@ -75,10 +75,19 @@ Update "site.yml" file to make use of the dynamic assignment.
   import_playbook: ../static-assignments/webservers.yml
 ```
 
+On Jenkins-Ansible server make sure that git is installed with "git --version", then go to ‘ansible-config-artifact’ directory and run
+
+```
+git init
+git pull https://github.com/femie15/ansible-config-mgt.git
+git remote add origin https://github.com/femie15/ansible-config-mgt.git
+git branch roles-feature
+git switch roles-feature
+```
   
+if the git is not working from the root directory goto `vi .ssh/authorized_keys` and add the key to github ssh keys. then redo the process.
   
-  
-  
+
   
   
   
