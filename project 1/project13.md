@@ -13,7 +13,7 @@ To keep each environment’s variables file. Create a new folder "env-vars", the
   
 The layout should now look like this.
   
-
+![apache](https://github.com/femie15/darey/blob/main/project%201/project13/1-file-structure.PNG) 
   
 Now enter these into the "env-vars.yml" file
   
@@ -89,20 +89,25 @@ git checkout roles-feature
 (if the git is not working from the root directory goto `vi .ssh/authorized_keys` copy the ssh key and add the key to github ssh keys. then redo the process.)
   
 Inside roles `cd roles` directory create your new MySQL role with `ansible-galaxy install geerlingguy.mysql` and rename the folder to mysql
+  
+![apache](https://github.com/femie15/darey/blob/main/project%201/project13/2-ansibleGalMysql.PNG)
 
 `mv geerlingguy.mysql/ mysql` then edit `vi mysql/defaults/main.yml` and edit the following
   
+![apache](https://github.com/femie15/darey/blob/main/project%201/project13/2-ansibleGalMysql2.PNG)
+  
+
 ```
  # Databases.
  mysql_databases:
-    - name: tooling
+    - name: 'tooling'
       collation: utf8_general_ci
       encoding: utf8
       replicate: 1
 
  # Users.
  mysql_users:
-    - name: webaccess
+    - name: 'webaccess'
       host: 0.0.0.0.
       password: secret
       priv: '*.*:ALL,GRANT'
@@ -126,6 +131,8 @@ We want to be able to choose which Load Balancer to use, Nginx or Apache, so we 
 1. Nginx - `ansible-galaxy install geerlingguy.nginx`
   
 2. Apache - `ansible-galaxy install geerlingguy.apache`
+  
+![apache](https://github.com/femie15/darey/blob/main/project%201/project13/3-nginxApache.PNG)
  
 then we can rename the directory `mv geerlingguy.nginx/ nginx` and `mv geerlingguy.apache/ apache`
   
@@ -149,9 +156,11 @@ nginx_upstreams:
  - name: myapp1
    strategy: "ip_hash" # "least_conn", etc.
    keepalive: 16 # optional
-   servers:
-     - "172.31.85.40 weight=3"
-     - "172.31.90.83 weight=3"
+   servers: {
+     "web1 weight=3",
+     "web2 weight=3",
+     "proxy_pass http://myapp1"
+   }
 ```
   
   and
@@ -182,43 +191,114 @@ nginx_extra_http_options:
 
 goto `vi nginx/tasks/main.yml` 
   
-and insert `become: true` to the nginx setup.
+and insert `become: true` to the nginx setup. and place this at the bottom
   
+![apache](https://github.com/femie15/darey/blob/main/project%201/project13/4-nginx.PNG)
+
+```
+enable_nginx_lb: false
+load_balancer_is_required: false
+```
   
 and also remove the "Rocky server option"
   
-
-
+![apache](https://github.com/femie15/darey/blob/main/project%201/project13/5-user.PNG)
   
+add this under the "Vhost configuration" 
+
+``` 
+- name: set webservers host name in /etc/hosts
+  become: yes
+  blockinfile: 
+    path: /etc/hosts
+    block: |
+      {{ item.ip }} {{ item.name }}
+  loop:
+    - { name: web1, ip: 172.31.31.44 }
+    - { name: web2, ip: 172.31.30.168 }
+```
   
+for apache goto `vi apache/tasks/main.yml` and add the following below the file
+  
+```
+enable_apache_lb: false
+load_balancer_is_required: false
+  
+loadbalancer_name: "myapp1"
+web1: "172.31.85.40 weight=3"
+web2: "172.31.90.83 weight=3"
+```
+
+Redhat configuration
+  
+ goto `vi apache/tasks/setup-RedHat.yml` and insert `become: true` in the line after "name: Ensure....." (Do same for Nginx too)
+  
+### CNTD
   
 Since we cannot use both Nginx and Apache load balancer, we need to add a condition to enable either one (this is where you can make use of variables).
 
-Declare a variable in defaults/main.yml file inside the Nginx and Apache roles. Name each variables enable_nginx_lb and enable_apache_lb respectively.
+Declare a variable in "defaults/main.yml" file inside the Nginx and Apache roles. Name each variables enable_nginx_lb and enable_apache_lb respectively.
 
 Set both values to false like this enable_nginx_lb: false and enable_apache_lb: false.
 
 Declare another variable in both roles load_balancer_is_required and set its value to false as well
 
-Update both assignment and site.yml files respectively
+Update both "assignment" and "site.yml" files respectively
 
-loadbalancers.yml file
-
+create "lb.yml" file in the static assignment directory
+  
+  
+```
+---
 - hosts: lb
   roles:
     - { role: nginx, when: enable_nginx_lb and load_balancer_is_required }
     - { role: apache, when: enable_apache_lb and load_balancer_is_required }
-site.yml file
+```
+  
+also create "db.yml" and paste
+  
+```
+ ---
+- hosts: db
+  roles:
+     - mysql
+  become: true
+```
 
-     - name: Loadbalancers assignment
-       hosts: lb
-         - import_playbook: ../static-assignments/loadbalancers.yml
-        when: load_balancer_is_required 
+
+in the "site.yml" file
+
+```
+---
+- name: Include dynamic variables 
+  hosts: all
   
+- name: import common file
+  import_playbook: ../static-assignments/common.yml
+  tags:
+    - always
+
+- name: include env-vars file
+  import_playbook: ../dynamic-assignments/env-vars.yml
+  tags:
+    - always
+
+- name: import database file
+  import_playbook: ../static-assignments/db.yml
+
+- name: import webservers file
+  import_playbook: ../static-assignments/webservers.yml
+
+- name: import Loadbalancers assignment
+  import_playbook: ../static-assignments/lb.yml
+  when: load_balancer_is_required 
+ ```
+    
+  run the playbook
   
-  
-  
-  
+ `ansible-playbook -i inventory/uat.yml playbooks/site.yml
+`
   
   
   
