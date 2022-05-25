@@ -636,7 +636,65 @@ sudo systemctl status sonar
   
 To access SonarQube using browser, type server’s IP address followed by port 9000 "http://<Public IP>:9000"
  
+## CONFIGURE SONARQUBE AND JENKINS FOR QUALITY GATE
+  
+In Jenkins, install SonarScanner plugin, then navigate to Manage Jenkins > Configure System 
+  
+under sonarqube server, input the name and url "http://<Public IP>:9000"
+  
+Generate authentication token in SonarQube; User > My Account > Security > (type token name) Generate Tokens, then copy the generated token.
+ 
+Configure Quality Gate Jenkins Webhook in SonarQube – Administration > Configuration > Webhooks > Create
+  
+replace the URL with the one that points to your Jenkins server http://{JENKINS_HOST}/sonarqube-webhook/
+  
+Setup SonarQube scanner from Jenkins – Global Tool Configuration; Manage Jenkins > Global Tool Configuration and input "SonarQubeScanner"
+  
+Configure "sonar-scanner.properties"
+  
+`cd /var/lib/jenkins/tools/hudson.plugins.sonar.SonarRunnerInstallation/SonarQubeScanner/conf/`
+  
+Open sonar-scanner.properties file `vi sonar-scanner.properties`
+ 
+Add configuration related to php-todo project
 
+```
+sonar.host.url=http://<SonarQube-Server-IP-address>:9000
+sonar.projectKey=php-todo
+#----- Default source code encoding
+sonar.sourceEncoding=UTF-8
+sonar.php.exclusions=**/vendor/**
+sonar.php.coverage.reportPaths=build/logs/clover.xml
+sonar.php.tests.reportPath=build/logs/junit.xml
+```
+  
+Update Jenkins Pipeline to include SonarQube scanning and Quality Gate in "Jenkinsfile"
+  
+```
+stage('SonarQube Quality Gate') {
+        environment {
+            scannerHome = tool 'SonarQubeScanner'
+        }
+        steps {
+            withSonarQubeEnv('sonarqube') {
+                sh "${scannerHome}/bin/sonar-scanner"
+            }
+
+        }
+    }
+```
+  
+To generate Jenkins code, navigate to the dashboard for the php-todo pipeline and click on the Pipeline Syntax menu item; Dashboard > php-todo > Pipeline Syntax 
+
+Click on "Steps" and select "withSonarQubeEnv" – This appears in the list because of the previous SonarQube configurations you have done in Jenkins
+  
+Navigate to php-todo project in SonarQube
+  
+in the codes, there are bugs, and there is 0.0% code coverage...
+  
+  
+  
+  
   
   
   
