@@ -1,5 +1,9 @@
 # AWS CLOUD SOLUTION FOR 2 COMPANY WEBSITES USING A REVERSE PROXY TECHNOLOGY
 
+## Architechture
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project15/archi.png)
+
 Configuring AWS account and Organization Unit 
 
 - Create an AWS Master account. (Also known as Root Account)
@@ -8,23 +12,37 @@ Configuring AWS account and Organization Unit
 - Move the DevOps account into the Dev OU.
 - Login to the newly created AWS account using the new email address.
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project15/1-account.PNG)
 
 - Create a free domain name for your fictitious company at Freenom domain registrar here.
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project15/2-freenom.PNG)
 
 - Create a hosted zone in AWS, and map it to your free domain from Freenom. Watch how to do that here
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project15/3-nameserver.PNG)
 
 ### VPC
 
 - Create a VPC with the name of the company (with IPv4 CIDR of 10.0.0.0/16), 
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project15/4-vpc.PNG)
+
 - Edit the DNS Hostname and enable it.
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project15/5-dnsHN.PNG)
 
 - We now create an Internet Gateway and attach it to a VPC
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project15/6-internet_gateway.PNG)
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project15/7-attach.PNG)
+
 - now we create a subnets as shown in the architecture with different availability zones. (for the 2public subnet we used IPv4 CIDR 10.0.2.0/24 and 10.0.4.0/24 [even numbers] while for the 4 private subnets, we used 10.0.1.0/24, 10.0.4.0/24, 10.0.6.0/24, 10.0.8.0/24)
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project15/8-pub-subnet.PNG)
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project15/9-private.PNG)
 
 - Create a route (browt-pub-rt) table and associate it with public subnets (check the route table and click on "Subnet associations" then "Edit Subnet associations" to map it with pulic subnets)
 
@@ -32,13 +50,19 @@ Configuring AWS account and Organization Unit
 
 - Edit a route in public route table, and associate it with the Internet Gateway. (This is what allows a public subnet to be accisble from the Internet)
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project15/11-editroute.PNG)
+
 - Create 3 Elastic IPs and allocate it to a resource (Nat gateway)...
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project15/13-elasticIP.PNG)
 
 - Create a Nat Gateway and assign one of the Elastic IPs (*The other 2 will be used by Bastion hosts)
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project15/14-Nat.PNG)
 
 Now we can revisit our "route table" by Editing a route in private route table ("action" > "Edit route"), and associate it with the NAT-Gateway as Target and "0.0.0.0/0" as Destination.
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project15/15-RT.PNG)
 
 -Create a Security Group for:
 
