@@ -4,6 +4,8 @@
 
 ![apache](https://github.com/femie15/darey/blob/main/project%201/project15/archi.png)
 
+WARNING: delete all resources after practice to avoid cost.
+
 Configuring AWS account and Organization Unit 
 
 - Create an AWS Master account. (Also known as Root Account)
@@ -38,7 +40,7 @@ Configuring AWS account and Organization Unit
 
 ![apache](https://github.com/femie15/darey/blob/main/project%201/project15/7-attach.PNG)
 
-- now we create a subnets as shown in the architecture with different availability zones. (for the 2public subnet we used IPv4 CIDR 10.0.2.0/24 and 10.0.4.0/24 [even numbers] while for the 4 private subnets, we used 10.0.1.0/24, 10.0.4.0/24, 10.0.6.0/24, 10.0.8.0/24)
+- now we create a subnets as shown in the architecture with different availability zones. (for the 2public subnet we used IPv4 CIDR 10.0.0.0/24 and 10.0.2.0/24 [even numbers] while for the 4 private subnets, we used 10.0.1.0/24, 10.0.3.0/24, 10.0.5.0/24, 10.0.7.0/24). Ensure a pair of Private subnets are in the same availability zones as each publlic subnet as specified in the architectural diagram.
 
 ![apache](https://github.com/femie15/darey/blob/main/project%201/project15/8-pub-subnet.PNG)
 
@@ -48,9 +50,11 @@ Configuring AWS account and Organization Unit
 
 - Create a route (browt-priv-rt) table and associate it with private subnets and do the same as above.
 
-- Edit a route in public route table, and associate it with the Internet Gateway. (This is what allows a public subnet to be accisble from the Internet)
+- Edit a route in public route table, and make it have access to the public internet (0.0.0.0/0)  make the target the Internet Gateway. (This is what allows a public subnet to be accessible from the Internet)
 
 ![apache](https://github.com/femie15/darey/blob/main/project%201/project15/11-editroute.PNG)
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project15/12-route.PNG)
 
 - Create 3 Elastic IPs and allocate it to a resource (Nat gateway)...
 
@@ -64,21 +68,102 @@ Now we can revisit our "route table" by Editing a route in private route table (
 
 ![apache](https://github.com/femie15/darey/blob/main/project%201/project15/15-RT.PNG)
 
+So, in summary, the public subnet route to the internet gateway (public /external internet access) while the private subnet routes to the NAT gateway (only allows outbound access)
+
 -Create a Security Group for:
 
-1. Nginx Servers: Access to Nginx should only be allowed from a Application Load balancer (ALB). At this point, we have not created a load balancer, therefore we will update the rules later. For now, just create it and put some dummy records as a place holder.
-2. Bastion Servers: Access to the Bastion servers should be allowed only from workstations that need to SSH into the bastion servers. Hence, you can use your 
-3. workstation public IP address. To get this information, simply go to your terminal and type curl www.canhazip.com
-4. Application Load Balancer: ALB will be available from the Internet
-5. Webservers: Access to Webservers should only be allowed from the Nginx servers. Since we do not have the servers created yet, just put some dummy records as a place holder, we will update it later.
-6. Data Layer: Access to the Data layer, which is comprised of Amazon Relational Database Service (RDS) and Amazon Elastic File System (EFS) must be carefully desinged – only webservers should be able to connect to RDS, while Nginx and Webservers will have access to EFS Mountpoint.
+1. Nginx Server (Reverse proxy): Access to Nginx should only be allowed from a Application Load balancer (ALB) and SSH access to our bastion host as well. At this point, we have not created a load balancer, therefore we will update the rules later. For now, just create it and put some dummy records as a place holder.
+2. Bastion Servers: We give SSH Access to the Bastion servers and should be allowed only from workstations that need to SSH into the bastion servers. Hence, you can use your workstation public IP address. To get this information, simply go to your terminal and type curl www.canhazip.com
+3. Application Load Balancer (internal): Internal ALB will be available from the Nginx server only (HTTP / HTTPS)
+4. Application Load Balancer (external): External ALB will be available from the Internet (HTTP / HTTPS)
+5. Webservers: HTTPS/HTTP Access to Webservers should only be allowed from the internal ALB. and SSH access from the bastion host only
+6. Data Layer: Access to the Data layer, which is comprised of Amazon Relational Database Service (RDS) and Amazon Elastic File System (EFS) must be carefully desinged. We give "MYSQL/Aurora" access to the bastion host and webservers, and NFS access to webserver as well.
 
-### Set Up Compute Resources for Nginx
+### Certificate Manager
 
-- Provision EC2 Instances for Nginx
-- Create an EC2 Instance based on CentOS Amazon Machine Image (AMI) in any 2 Availability Zones (AZ) in any AWS Region (Use EC2 instance of T2 family)
-- Ensure that it has the following software installed:
-- 
+We need to create a certificate for our domain name (after registering and inputing nameservers).
+
+- Navigate to the Amazon Certificate Manager service page
+- Click "Request a certificate"
+- check "Request a public certificate" and click next
+- at the domain name field, use a wild card `*.ccchf.ml` to cater for subsequent sub-domains.
+- use DNS validation 
+- Give a "Name" tag, and click "Request".
+- Then click the requested certificate and click on "Create Record in Route 53" and it will automatically write in the R53.
+
+### EFS (Amazon- Elastic File System)
+
+- Navigate to the EFS on console and click "create"
+- give it a name and select our VPC and "Regional" availability
+- Click on "customize"  to have more options
+- Give a tag name and click next
+- For network config; select our new VPC, for mount target, select private-subnet-1 and private-subnet-2 and the security group will be the "data-layer" (where the EFS is situated)
+- Click "next" and "Create"
+
+### Access Point
+
+- Click on the newly created EFS and sselect "access point" then click "Create access point"
+- Give the AP a name e.g. "wordpress"
+- Root directory path "/wordpress"
+- User ID (POSIX user ID), Group ID, Owner user ID, Owner group ID,  are all "0" (meaning root user)
+- POSIX permissions to apply to the root directory path is "0755" (read and write permission)
+- Give it a tagname "wordpress-AP"
+- Do the same thing for "tooling" as well.
+
+### Key Management Service
+
+- On console goto KMS and click "create Key"
+- create the key by giving it a name and selecting our account as administrator, then Allow administrator to delete and use the key
+
+### RDS
+
+- Navigate to RDS and click "Create subnet group"
+- give it a name, select the VPC and the private subnet 3 & 4 (to host the RDS according to the diagram)
+- then click create.
+
+________________________________________________________________________
+
+- Goto Database and create
+- You should check for price difference to inform your decision on the type and tier category.(we will use the free tier for the testing purpose- the major disadvantage is that we wont be able to select our created key management service for dB encryption)
+- select "standard", "Mysql", prefered version, "free tier", "DB instance identifier", username & password, "Virtual private cloud (VPC)", "Subnet group", set "Public access" to "NO", "Existing VPC security groups" to "data-layer", "Availability Zone", "password autherntication".
+- Click "create dB"
+
+### configure compute
+
+Note: to create an auto-scaling group we need AMI, launch template (to create ec2 instances including the bastion host) & target group (Nginx (Reverse proxy)) - attached to a load balancer.
+
+create 3 red hat instances for: bastion,nginx and webserver
+
+### use these installation for bastion host ( <a href="https://github.com/femie15/ACS-project-config/blob/main/Installation.md"> reference </a>)
+
+```
+yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+
+yum install -y dnf-utils http://rpms.remirepo.net/enterprise/remi-release-8.rpm
+
+yum install wget vim python3 telnet htop git mysql net-tools chrony -y
+
+systemctl start chronyd
+
+systemctl enable chronyd
+```
+
+### Set Up Compute Resources for Nginx ( <a href="https://github.com/femie15/ACS-project-config/blob/main/Installation.md"> reference </a>)
+
+```
+yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+
+yum install -y dnf-utils http://rpms.remirepo.net/enterprise/remi-release-8.rpm
+
+yum install wget vim python3 telnet htop git mysql net-tools chrony -y
+
+systemctl start chronyd
+
+systemctl enable chronyd
+```
+
+to install the below
+
 ```
 python
 ntp
@@ -90,7 +175,66 @@ epel-release
 htop
 ```
 
+configure selinux policies for the webservers and nginx servers
+
+```
+setsebool -P httpd_can_network_connect=1
+setsebool -P httpd_can_network_connect_db=1
+setsebool -P httpd_execmem=1
+setsebool -P httpd_use_nfs 1
+```
+
+Install amazon efs utils for mounting the target on the Elastic file system
+
+```
+git clone https://github.com/aws/efs-utils
+
+cd efs-utils
+
+yum install -y make
+
+yum install -y rpm-build
+
+make rpm 
+
+yum install -y  ./build/amazon-efs-utils*rpm
+```
+
+type `cd` (to come out of the entered "utils" directory)
+
+seting up self-signed certificate for the nginx instance
+
+```
+sudo mkdir /etc/ssl/private
+
+sudo chmod 700 /etc/ssl/private
+
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/ssl/private/ACS.key -out /etc/ssl/certs/ACS.crt
+
+sudo openssl dhparam -out /etc/ssl/certs/dhparam.pem 2048
+```
+
+Note the following ;
+
+_______________________________________________
+
+Country Name (2 letter code) [XX]:UK
+
+State or Province Name (full name) []:London
+
+Locality Name (eg, city) [Default City]:London
+
+Organization Name (eg, company) [Default Company Ltd]:Browt
+
+Organizational Unit Name (eg, section) []:DevOps
+
+Common Name (eg, your name or your server's hostname) []:ip-172-31-26-210.ec2.internal
+
+Email Address []:name@gmail.com
+___________________________________________
+
 - Create an AMI out of the EC2 instance
+
 
 ### Prepare Launch Template For Nginx (One Per Subnet)
 
