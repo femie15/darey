@@ -233,206 +233,207 @@ Common Name (eg, your name or your server's hostname) []:ip-172-31-26-210.ec2.in
 Email Address []:name@gmail.com
 ___________________________________________
 
-- Create an AMI out of the EC2 instance
+### Webserver
 
 
-### Prepare Launch Template For Nginx (One Per Subnet)
+```
+yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 
-Make use of the AMI to set up a launch template
+yum install -y dnf-utils http://rpms.remirepo.net/enterprise/remi-release-8.rpm
 
-Ensure the Instances are launched into a public subnet
+yum install wget vim python3 telnet htop git mysql net-tools chrony -y
 
-Assign appropriate security group
+systemctl start chronyd
 
-Configure Userdata to update yum package repository and install nginx
+systemctl enable chronyd
+```
 
-Configure Target Groups
+```
+setsebool -P httpd_can_network_connect=1
+setsebool -P httpd_can_network_connect_db=1
+setsebool -P httpd_execmem=1
+setsebool -P httpd_use_nfs 1
+```
 
-Select Instances as the target type
 
-Ensure the protocol HTTPS on secure TLS port 443
+```
+git clone https://github.com/aws/efs-utils
 
-Ensure that the health check path is /healthstatus
+cd efs-utils
 
-Register Nginx Instances as targets
+yum install -y make
 
-Ensure that health check passes for the target group
+yum install -y rpm-build
 
-Configure Autoscaling For Nginx
+make rpm 
 
-Select the right launch template
+yum install -y  ./build/amazon-efs-utils*rpm
+```
 
-Select the VPC
+seting up self-signed certificate for the apache webserver instance
 
-Select both public subnets
+```
+yum install -y mod_ssl
 
-Enable Application Load Balancer for the AutoScalingGroup (ASG)
+openssl req -newkey rsa:2048 -nodes -keyout /etc/pki/tls/private/ACS.key -x509 -days 365 -out /etc/pki/tls/certs/ACS.crt
 
-Select the target group you created before
+vi /etc/httpd/conf.d/ssl.conf
+```
 
-Ensure that you have health checks for both EC2 and ALB
+edit : `SSLCertificateFile /etc/pki/tls/certs/ACS.crt` and `SSLCertificateKeyFile /etc/pki/tls/private/ACS.key`
 
-The desired capacity is 2
+### Create an AMI out of the EC2 instance
 
-Minimum capacity is 2
+- select on the webserver on console
+- click "Actions > Image and Templates > Create Image"
+- fill the form  and create image
 
-Maximum capacity is 4
+Do the same for bastion and nginx
 
-Set scale out if CPU utilization reaches 90%
+We can check the AMIs by going to Ami on the console...
 
-Ensure there is an SNS topic to send scaling notifications
+### Target Groups
 
-Set Up Compute Resources for Bastion
+- Create Target groups
+- Make Instance a target type, give it a name
+- select HTTPS protocol
+- select our created VPC
+- Protocol version - HTTP1
+- health check (HTTPS) - "/healthstatus"
+- add a tag name
+- Click "next" then "Create target group"
 
-Provision the EC2 Instances for Bastion
+### TG for wordpress & Tooling
 
-Create an EC2 Instance based on CentOS Amazon Machine Image (AMI) per each Availability Zone in the same Region and same AZ where you created Nginx server
+-repeat the steps above for wordpress & Tooling targets
 
-Ensure that it has the following software installed
+### Load Balancers (Ext ad Int)
 
-python
-ntp
-net-tools
-vim
-wget
-telnet
-epel-release
-htop
+- Goto Load balancer and follow the configuration by selecting our VPCs, Public subnets, Nginx-target group (for External LB), Ext-ALB-SG, Listeners & routing : Nginx (HTTPS), 
+- It automatically picks our Default SSL/TLS certificate (ACM).
+- Create Load Balancer
+- Repeat the process for the Internal Load balancer. (use wordpress as default route)
 
-### Associate an Elastic IP with each of the Bastion EC2 Instances
+### configure tooling
+
+- Click on the tooling LB
+- Check the default listener and  under "RULES" Click "View/edit rules"
+- click on the + sign, then "insert rules".
+- Save
 
-Create an AMI out of the EC2 instance
+### lunch template
 
-Prepare Launch Template For Bastion (One per subnet)
+- Goto lunch template and create for bastion,nginx, webserver
 
-Make use of the AMI to set up a launch template
+bastion userdata:
 
-Ensure the Instances are launched into a public subnet
+```
+#!/bin/bash 
+yum install -y mysql 
+yum install -y git tmux 
+yum install -y ansible
+```
 
-Assign appropriate security group
+for nginx userdata:
 
-Configure Userdata to update yum package repository and install Ansible and git
+```
+#!/bin/bash
+yum install -y nginx
+systemctl start nginx
+systemctl enable nginx
+git clone https://github.com/femie15/ACS-project-config.git
+mv /ACS-project-config/reverse.conf /etc/nginx/
+mv /etc/nginx/nginx.conf /etc/nginx/nginx.conf-distro
+cd /etc/nginx/
+touch nginx.conf
+sed -n 'w nginx.conf' reverse.conf
+systemctl restart nginx
+rm -rf reverse.conf
+rm -rf /ACS-project-config
+```
 
-Configure Target Groups
+Nginx Reverse.conf
 
-Select Instances as the target type
+Note: `server_name  *.ccchf.ml;` and ` proxy_pass https://internal-BR-Int-lb-1262810285.us-east-1.elb.amazonaws.com; ` (gotten from internal LB DNS name)
 
-Ensure the protocol is TCP on port 22
+for wordpress userdata:
 
-Register Bastion Instances as targets
+goto EFS console, click on access point, select the wordpress and click "attach" 
 
-Ensure that health check passes for the target group
+copy the test and paste below (3rd line)
 
-Configure Autoscaling For Bastion
+```
+#!/bin/bash
+mkdir /var/www/
+sudo mount -t efs -o tls,accesspoint=fsap-05faa6cbe4a70d3be fs-01be6aa8558198905:/ /var/www/
+yum install -y httpd 
+systemctl start httpd
+systemctl enable httpd
+yum module reset php -y
+yum module enable php:remi-7.4 -y
+yum install -y php php-common php-mbstring php-opcache php-intl php-xml php-gd php-curl php-mysqlnd php-fpm php-json
+systemctl start php-fpm
+systemctl enable php-fpm
+wget http://wordpress.org/latest.tar.gz
+tar xzvf latest.tar.gz
+rm -rf latest.tar.gz
+cp wordpress/wp-config-sample.php wordpress/wp-config.php
+mkdir /var/www/html/
+cp -R /wordpress/* /var/www/html/
+cd /var/www/html/
+touch healthstatus
+sed -i "s/localhost/brdb.cizxwiigpcpq.us-east-1.rds.amazonaws.com/g" wp-config.php 
+sed -i "s/username_here/ACSadmin/g" wp-config.php 
+sed -i "s/password_here/admin12345/g" wp-config.php 
+sed -i "s/database_name_here/wordpressdb/g" wp-config.php 
+chcon -t httpd_sys_rw_content_t /var/www/html/ -R
+systemctl restart httpd
+```
 
-Select the right launch template
+for tooling userdata:
 
-Select the VPC
+```
+#!/bin/bash
+mkdir /var/www/
+sudo mount -t efs -o tls,accesspoint=fsap-0afc46fc243685fce fs-01be6aa8558198905:/ /var/www/
+yum install -y httpd 
+systemctl start httpd
+systemctl enable httpd
+yum module reset php -y
+yum module enable php:remi-7.4 -y
+yum install -y php php-common php-mbstring php-opcache php-intl php-xml php-gd php-curl php-mysqlnd php-fpm php-json
+systemctl start php-fpm
+systemctl enable php-fpm
+git clone https://github.com/femie15/tooling.git
+mkdir /var/www/html
+cp -R /tooling-1/html/*  /var/www/html/
+cd /tooling-1
+mysql -h acs-database.cdqpbjkethv0.us-east-1.rds.amazonaws.com -u admin -p toolingdb < tooling-db.sql
+cd /var/www/html/
+touch healthstatus
+sed -i "s/$db = mysqli_connect('mysql.tooling.svc.cluster.local', 'admin', 'admin12345', 'toolingdb');/$db = mysqli_connect('brdb.cizxwiigpcpq.us-east-1.rds.amazonaws.com', 'admin', 'admin12345', 'toolingdb');/g" functions.php
+chcon -t httpd_sys_rw_content_t /var/www/html/ -R
+systemctl restart httpd
+```
 
-Select both public subnets
+### Auto scaling group
 
-Enable Application Load Balancer for the AutoScalingGroup (ASG)
+complete the auto scaling group, create database "wordpressdb" and "toolingdb" and test.
 
-Select the target group you created before
 
-Ensure that you have health checks for both EC2 and ALB
 
-The desired capacity is 2
 
-Minimum capacity is 2
 
-Maximum capacity is 4
 
-Set scale out if CPU utilization reaches 90%
 
-Ensure there is an SNS topic to send scaling notifications
 
-Set Up Compute Resources for Webservers
 
-Provision the EC2 Instances for Webservers
 
-Now, you will need to create 2 separate launch templates for both the WordPress and Tooling websites
 
-Create an EC2 Instance (Centos) each for WordPress and Tooling websites per Availability Zone (in the same Region).
 
-Ensure that it has the following software installed
 
-python
-ntp
-net-tools
-vim
-wget
-telnet
-epel-release
-htop
-php
-Create an AMI out of the EC2 instance
 
-### Prepare Launch Template For Webservers (One per subnet)
 
-Make use of the AMI to set up a launch template
 
-Ensure the Instances are launched into a public subnet
 
-Assign appropriate security group
 
-Configure Userdata to update yum package repository and install wordpress (Only required on the WordPress launch template)
-
-TLS Certificates From Amazon Certificate Manager (ACM)
-
-You will need TLS certificates to handle secured connectivity to your Application Load Balancers (ALB).
-
-Navigate to AWS ACM
-
-Request a public wildcard certificate for the domain name you registered in Freenom
-
-Use DNS to validate the domain name
-
-Tag the resource
-
-## Application Load Balancer To Route Traffic To NGINX
-
-- Create a ALB
-- Ensure that it listens on HTTPS protocol (TCP port 443)
-- Ensure the ALB is created within the appropriate VPC | AZ | Subnets
-- Choose the Certificate from ACM
-- Select Security Group
-- Select Nginx Instances as the target group
-
-## Internal Load Balancer
-
-- Create an Internal ALB
-- Ensure that it listens on HTTPS protocol (TCP port 443)
-- Ensure the ALB is created within the appropriate VPC | AZ | Subnets
-- Choose the Certificate from ACM
-- Select Security Group
-- Select webserver Instances as the target group
-- Ensure that health check passes for the target group
-
-## Setup EFS
-
-- Create an EFS filesystem
-- Create an EFS mount target per AZ in the VPC, associate it with both subnets dedicated for data layer
-- Associate the Security groups created earlier for data layer.
-- Create an EFS access point. (Give it a name and leave all other settings as default)
-
-## Setup RDS
-
-Create a KMS key from Key Management Service (KMS) to be used to encrypt the database instance.
-
-- Create a subnet group and add 2 private subnets (data Layer)
-- Create an RDS Instance for mysql 8.*.*
-- To satisfy our architectural diagram, you will need to select either Dev/Test or Production Sample Template. (But to minimize AWS cost, you can select the Do not create a standby instance option under Availability & durability sample template (The production template will enable Multi-AZ deployment)
-Configure other settings accordingly (For test purposes, most of the default settings are good to go). In the real world, you will need to size the database appropriately. You will need to get some information about the usage. If it is a highly transactional database that grows at 10GB weekly, you must bear that in mind while configuring the initial storage allocation, storage autoscaling, and maximum storage threshold.
-- Configure VPC and security (ensure the database is not available from the Internet)
-- Configure backups and retention
-- Encrypt the database using the KMS key created earlier
-- Enable CloudWatch monitoring and export Error and Slow Query logs (for production, also include Audit)
-
-Configuring DNS with Route53
-
-Create other records such as CNAME, alias and A records.
-
-Create an alias record for the root domain and direct its traffic to the ALB DNS name.
-
-Create an alias record for tooling.<yourdomain>.com and direct its traffic to the ALB DNS name.
