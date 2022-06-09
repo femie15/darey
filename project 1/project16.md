@@ -1,8 +1,14 @@
 # AUTOMATE INFRASTRUCTURE WITH IAC USING TERRAFORM PART 1
 
+We need to re-create the project 15 with Infrastructure as code.
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project16/archi.png)
+
 1. Create an IAM user named "terraform" and give it only "programatic access" to AWS account and grant "AdministratorAccess permissions" to it.
 2. Configure programmatic access from the workstation to connect to AWS using "secret access key and access key ID" of the new user, and a <a href="https://boto3.amazonaws.com/v1/documentation/api/latest/guide/quickstart.html">Python SDK (boto3)</a>. (Python 3.6 or higher is recommended on your workstation), Use "AWS CLI with AWS configure" for easier authentication.
 3. Create a S3 bucket and name it "femie13-dev-terraform-bucket"
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project16/1-s3.PNG)
 
 To confirm the boto3 set up, on the terminal, run `python` , this will cause the terminal to expect python code, then enter the script below to fetch the list of S3 buckets.
 
@@ -12,6 +18,8 @@ s3 = boto3.resource('s3')
 for bucket in s3.buckets.all():
     print(bucket.name)
 ```
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project16/2.PNG)
 
 ## VPC | SUBNETS | SECURITY GROUPS
 
@@ -36,11 +44,17 @@ resource "aws_vpc" "main" {
 
 To download necessary plugins used by providers(in our case) and provisioners for Terraform to work, we need to run the command `terraform init` this downloads some files (".terraform.lock.hcl") and folders (".terraform" where is stores plugins).
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project16/3-terainit.PNG)
+
 From our "main.tf" file we defined a VPC resource to be created, let's view the resource terraform plan to create by running `terraform plan`
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project16/4-plan.PNG)
 
 During the "terraform plan" and "terraform apply" a temporary file called "terraform.tfstate.lock.info" This is what Terraform uses to track, who is running its code against the infrastructure at any point in time. This is very important for teams working on the same Terraform repository at the same time. The lock prevents a user from executing Terraform configuration against the same infrastructure when another user is doing the same – it allows to avoid duplicates and conflicts.
 
 "terraform.tfstate" is also created. This is how Terraform keeps itself up to date with the exact state of the infrastructure. It reads this file to know what already exists, what should be added, or destroyed based on the entire terraform code that is being developed.
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project16/5-temp.PNG)
 
 ### Subnets resource section
 
@@ -68,6 +82,8 @@ Create the first 2 (of 6) public subnets. in the two AZs
 Note: some values are still hard-coded and multiple resource blocks are present (these will be fixed later).
 
 run `terraform fmt` to format the arrangement of our code well and run `terraform validate` to validate, (these are not assurance that the code will apply/plan successfully).
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project16/6-createVpc.PNG)
 
 now run `terraform plan` to view what we are creating and `terraform apply` to create the resources.
 
@@ -154,6 +170,8 @@ resource "aws_subnet" "public" {
 
 - run `terraform console` to see how the above works.
 - run `cidrsubnet("172.16.0.0/16", 4, 0)`
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project16/7-cidrsubnet.PNG)
 
 See the output by changing the numbers and see what happens. (To get out of the console, type exit)
 
@@ -242,6 +260,11 @@ resource "aws_subnet" "public" {
 
 If we change the value of "preferred_number_of_public_subnets" variable to "null" 6 subnets get created.
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project16/8-nullAllSubnet.PNG)
+
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project16/9-tree.PNG)
+
 ### variables.tf & terraform.tfvars
 
 We can now make our code neater by separating variables in a separate file and provide non default values to each of them.
@@ -253,10 +276,6 @@ We can now make our code neater by separating variables in a separate file and p
 
 run `terraform plan`, `terraform apply --auto-approve`
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project16/10-success.PNG)
+
 Done !!!
-
-
-
-
-
-
