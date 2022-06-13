@@ -1264,4 +1264,90 @@ tags = {
 }
 ```
 
+Lastly, we need to create the infrastructure "userdata" for 
+
+1. bastion.sh 
+
+```
+#!/bin/bash 
+yum install -y mysql 
+yum install -y git tmux 
+yum install -y ansible
+```
+
+2. nginx.sh 
+
+```
+#!/bin/bash
+yum install -y nginx
+systemctl start nginx
+systemctl enable nginx
+git clone https://github.com/femie15/ACS-project-config.git
+mv /ACS-project-config/reverse.conf /etc/nginx/
+mv /etc/nginx/nginx.conf /etc/nginx/nginx.conf-distro
+cd /etc/nginx/
+touch nginx.conf
+sed -n 'w nginx.conf' reverse.conf
+systemctl restart nginx
+rm -rf reverse.conf
+rm -rf /ACS-project-config
+```
+
+3. wordpress.sh 
+
+```
+#!/bin/bash
+mkdir /var/www/
+sudo mount -t efs -o tls,accesspoint=fsap-05faa6cbe4a70d3be fs-01be6aa8558198905:/ /var/www/
+yum install -y httpd 
+systemctl start httpd
+systemctl enable httpd
+yum module reset php -y
+yum module enable php:remi-7.4 -y
+yum install -y php php-common php-mbstring php-opcache php-intl php-xml php-gd php-curl php-mysqlnd php-fpm php-json
+systemctl start php-fpm
+systemctl enable php-fpm
+wget http://wordpress.org/latest.tar.gz
+tar xzvf latest.tar.gz
+rm -rf latest.tar.gz
+cp wordpress/wp-config-sample.php wordpress/wp-config.php
+mkdir /var/www/html/
+cp -R /wordpress/* /var/www/html/
+cd /var/www/html/
+touch healthstatus
+sed -i "s/localhost/brdb.cizxwiigpcpq.us-east-1.rds.amazonaws.com/g" wp-config.php 
+sed -i "s/username_here/ACSadmin/g" wp-config.php 
+sed -i "s/password_here/admin12345/g" wp-config.php 
+sed -i "s/database_name_here/wordpressdb/g" wp-config.php 
+chcon -t httpd_sys_rw_content_t /var/www/html/ -R
+systemctl restart httpd
+```
+
+4. tooling.sh
+
+```
+#!/bin/bash
+mkdir /var/www/
+sudo mount -t efs -o tls,accesspoint=fsap-0afc46fc243685fce fs-01be6aa8558198905:/ /var/www/
+yum install -y httpd 
+systemctl start httpd
+systemctl enable httpd
+yum module reset php -y
+yum module enable php:remi-7.4 -y
+yum install -y php php-common php-mbstring php-opcache php-intl php-xml php-gd php-curl php-mysqlnd php-fpm php-json
+systemctl start php-fpm
+systemctl enable php-fpm
+git clone https://github.com/femie15/tooling.git
+mkdir /var/www/html
+cp -R /tooling-1/html/*  /var/www/html/
+cd /tooling-1
+mysql -h acs-database.cdqpbjkethv0.us-east-1.rds.amazonaws.com -u admin -p toolingdb < tooling-db.sql
+cd /var/www/html/
+touch healthstatus
+sed -i "s/$db = mysqli_connect('mysql.tooling.svc.cluster.local', 'admin', 'admin12345', 'toolingdb');/$db = mysqli_connect('brdb.cizxwiigpcpq.us-east-1.rds.amazonaws.com', 'admin', 'admin12345', 'toolingdb');/g" functions.php
+chcon -t httpd_sys_rw_content_t /var/www/html/ -R
+systemctl restart httpd
+```
+
+
 # DONE !!!
