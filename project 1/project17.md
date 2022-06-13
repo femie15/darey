@@ -177,9 +177,11 @@ resource "aws_route_table_association" "public-subnets-assoc" {
 }
 ```
 
+at this stage we can run `terraform plan` and `terraform apply --auto-approve`
 
+### AWS Identity and Access Management
 
-
+IaM and Roles
 
 
 
