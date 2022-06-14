@@ -35,6 +35,10 @@ resource "aws_subnet" "private" {
 }
 ```
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project17/2-vpc.PNG)
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project17/1-subnet.PNG)
+
 we can do the same refactoring for public subnet. in the variable.tf file we add the following
 
 ```
@@ -78,6 +82,8 @@ resource "aws_internet_gateway" "ig" {
 }
 ```
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project17/4-ig.PNG)
+
 The format() function helps to dynamically generate a unique name for this resource? The first part of the %s takes the interpolated value of aws_vpc.main.id while the second %s appends a literal string IG and finally an exclamation mark is added in the end
 
 ### NAT Gateways
@@ -113,6 +119,10 @@ resource "aws_nat_gateway" "nat" {
   )
 }
 ```
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project17/5-eip.PNG)
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project17/6-natgw.PNG)
 
 in the variable.tf file, we need to specify for var.environment
 
@@ -176,6 +186,8 @@ resource "aws_route_table_association" "public-subnets-assoc" {
   route_table_id = aws_route_table.public-rtb.id
 }
 ```
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project17/3-routetables.PNG)
 
 at this stage we can run `terraform plan` and `terraform apply --auto-approve`
 
@@ -488,6 +500,8 @@ resource "aws_security_group_rule" "inbound-mysql-webserver" {
 }
 ```
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project17/11-sg.PNG)
+
 ### CREATE CERTIFICATE FROM AMAZON CERIFICATE MANAGER
 
 Create "cert.tf" file...
@@ -557,6 +571,8 @@ resource "aws_route53_record" "wordpress" {
   }
 }
 ```
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project17/9-cert.PNG)
 
 ### Create an external (Internet facing) Application Load Balancer (ALB)
 
@@ -1069,6 +1085,10 @@ resource "aws_autoscaling_attachment" "asg_attachment_tooling" {
 }
 ```
 
+![apache](https://github.com/femie15/darey/blob/main/project%201/project17/12-lt.PNG)
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project17/10-instances.PNG)
+
 ## STORAGE AND DATABASE
 
 Create Elastic File System (EFS), In order to create an EFS you need to create a KMS key. (WS Key Management Service (KMS) makes it easy for you to create and manage cryptographic keys and control their use across a wide range of AWS services and in your applications.)
@@ -1263,6 +1283,8 @@ tags = {
   Billing-Account = "1234567890"
 }
 ```
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project17/8-rds.PNG)
 
 Lastly, we need to create the infrastructure "userdata" for 
 
