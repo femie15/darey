@@ -1,6 +1,12 @@
 # AUTOMATE INFRASTRUCTURE WITH IAC USING TERRAFORM. PART 3 – REFACTORING
 
 - Firstly, we re-arrange our files and directories from project-17 into various module sub-directory (VPC, ALB, Autoscaling, compute, EFS, RDS, Security).
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project18/1-directories.PNG)
+
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project18/2-directories%20files.PNG)
+
 - Create a "main.tf" in the root folder, "variable.tf" in all modules. 
 - Change all hard-coded script to variables in the modules.
 - Adjust the root module and use a forloop to create the cirdrsubnet variation 
@@ -72,6 +78,9 @@ resource "aws_s3_bucket" "terraform_state" {
   }
 }
 ```  
+
+
+![apache](https://github.com/femie15/darey/blob/main/project%201/project18/3-bucket.PNG)
 
 You must be aware that Terraform stores secret data inside the state files. Passwords, and secret keys processed by resources are always stored in there. Hence, you must consider to always enable encryption. You can see how we achieved that with server_side_encryption_configuration.
 
