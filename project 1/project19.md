@@ -45,53 +45,24 @@ add the neccesary packer files (each packer file for each sh file), run `packer 
 
 Do the same for "nginx.pkr.hcl", "ubuntu.pkr.hcl" and "web.pkr.hcl".
 
+Update the "terraform.auto.tfvars" file with the new "AMIs" created with packer and then push the code to github.
+
 from web console, run terraform plan and terraform apply
 
-Switch to "Runs" tab and click on "Queue plan manualy" button. If planning has been successfull, you can proceed and confirm Apply – press "Confirm and apply", provide a comment and "Confirm plan"
+Switch to "Runs" tab and click on "start a new plan",  "Queue plan manualy" button. If planning has been successfull, you can proceed and confirm Apply – press "Confirm and apply", provide a comment and "Confirm plan"
 
 Check the logs and verify that everything has run correctly. Note that Terraform Cloud has generated a unique state version that you can open and see the codes applied and the changes made since the last run.
 
-Test automated terraform plan
+Test automated terraform plan and see if it works fine.
 
+configure ansible manually by connecting to the instance and ensure you allow ansible to bet the updated ip address irrespective of when the auto-scaling group take an instance out of service. ensure you use teraform output (eg ip address) to update ansible
 
+Update the "nginx.conf.j2" file in template inside ansible-nginx, and set the proxy-pass to the latest one from aws.
 
+also update "setup-db.yaml" file in tooling-task to the terraform endpoint, dbname, user and password.
 
+copy a mount access point into the source field in task -> "main.yaml" file. we then go ahead to run ansible config file then ansible playbook.
 
+now we can restart our nginx and check the website which should be up. and we are able to login.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# Done
