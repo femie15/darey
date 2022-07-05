@@ -216,12 +216,96 @@ ________________________________________________________________________________
 
 
 
+Task 1
+
+1. Clone php-todo repo `git clone https://github.com/darey-devops/php-todo`
+2. Write a Dockerfile for the TODO app
+
+```
+FROM php:7.4.30-cli
+USER root
+WORKDIR  /var/www/html
+
+RUN apt-get update && apt-get install -y \
+    libpng-dev \
+    zlib1g-dev \
+    libxml2-dev \
+    libzip-dev \
+    libonig-dev \
+    zip \
+    curl \
+    unzip \
+    && docker-php-ext-configure gd \
+    && docker-php-ext-install -j$(nproc) gd \
+    && docker-php-ext-install pdo_mysql \
+    && docker-php-ext-install mysqli \
+    && docker-php-ext-install zip \
+    && docker-php-source delete
+
+COPY . .
+
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+ENTRYPOINT [  "bash", "start-apache.sh" ]
+```
+3. Run both database and app on Docker Engine then run to view
+
+Task 2
+
+- Create an account in Docker Hub
+- Create a new Docker Hub repository
+- Push the docker images from your PC to the repository
+
+`docker tag todo femie15/todo` `docker push femie15/todo`
+
+Task 3
+
+- Write a Jenkinsfile that will simulate a Docker Build and a Docker Push to the registry
+- Connect your repo to Jenkins
+- Create a multi-branch pipeline
+- Simulate a CI pipeline from a feature and master branch using previously created Jenkinsfile
+- Ensure that the tagged images from your Jenkinsfile have a prefix that suggests which branch the image was pushed from. For example, feature-0.0.1.
+- Verify that the images pushed from the CI can be found at the registry.
 
 
+### Deployment with Docker Compose
 
+check the Docker compose version to confirm if it's already on the machine else install
 
+`apt install docker-compose`
 
+`docker-compose --version`
 
+Back to the tooling application, we create "tooling.yaml" file
 
+```
+version: "3.3"
+services:
+  tooling_frontend:
+    build: .
+    ports:
+      - "5000:80"
+    volumes:
+      - tooling_frontend:/var/www/html
+    links:
+      - db
+  db:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_DATABASE: mysqlserverhost
+      MYSQL_USER: username
+      MYSQL_PASSWORD: password
+      MYSQL_RANDOM_ROOT_PASSWORD: '1'
+    volumes:
+      - db:/var/lib/mysql
+volumes:
+  tooling_frontend:
+  db:
+```
+
+Verify that the compose is in the running status:
+
+`docker compose ls`
 
 
