@@ -1,5 +1,7 @@
 # MIGRATION TO THE СLOUD WITH CONTAINERIZATION. PART 1 – DOCKER & DOCKER COMPOSE
 
+![Update](https://github.com/femie15/darey/blob/main/project%201/project20/1-dockerApp.png)
+
 1. Create a new Ubuntu EC2 instance to host our docker engine.
 2. Update apt and Download the script to install the docker engine and run it with this command (Reference https://docs.docker.com/engine/install/ubuntu)
 
@@ -28,6 +30,8 @@ Verify that you now have the key with the fingerprint by searching for the last 
 
 `sh ./get-docker.sh`
 
+![Update](https://github.com/femie15/darey/blob/main/project%201/project20/2-installDocker.png)
+
 To verify if docker is installed run `sudo docker version` and a response on details of the docker will be displayed
 
 ### MYSQL
@@ -38,7 +42,13 @@ To verify if docker is installed run `sudo docker version` and a response on det
 
 you may be required to login, then use the command `docker login` and enter both username and password from dockerhub account
 
+![Update](https://github.com/femie15/darey/blob/main/project%201/project20/3-pullmysql.png)
+
 4. check to see the pulled image  `docker image ls`
+
+![Update](https://github.com/femie15/darey/blob/main/project%201/project20/4-images.png)
+
+![Update](https://github.com/femie15/darey/blob/main/project%201/project20/5-installMysql.png)
 
 5. Deploy the MySQL Container to Docker Engine
 
@@ -56,9 +66,13 @@ Connecting directly to the container running the MySQL server:
 
 `docker exec -it <container_name> bash`
 
+![Update](https://github.com/femie15/darey/blob/main/project%201/project20/6-enterDockerContainer.png)
+
 or
 
 `docker exec -it mysql mysql -uroot -p`
+
+![Update](https://github.com/femie15/darey/blob/main/project%201/project20/7-runContainerMysql.png)
 
 Provide the root password when prompted. With that, you’ve connected the MySQL client to the server.
 
@@ -85,6 +99,8 @@ Approach 2
 
 Stop and remove the previous mysql docker container. then check if it's still there
 
+![Update](https://github.com/femie15/darey/blob/main/project%201/project20/8-removeMysqlDocker.png)
+
 ```
 docker stop <container_name> 
 docker rm <container_name>
@@ -99,6 +115,8 @@ Now we carry out the following
 
 `docker network create --subnet=172.18.0.0/24 tooling_app_network` and verify it with `docker network ls`
 
+![Update](https://github.com/femie15/darey/blob/main/project%201/project20/9-networkBridge.png)
+
 Docker will use the default network for all the containers run, we have created a "DRIVER Bridge" network which alsos serve as the default.
 This will be neccessary if there is a requirement to control the cidr range of the containers running the entire application stack. This will be an ideal situation to create a network and specify the --subnet
 
@@ -109,6 +127,8 @@ This will be neccessary if there is a requirement to control the cidr range of t
 3. Then, pull the image and run the container, all in one command :
 
 `docker run --network tooling_app_network -h mysqlserverhost --name=mysql-server -e MYSQL_ROOT_PASSWORD=$MYSQL_PW  -d mysql/mysql-server:latest `
+
+![Update](https://github.com/femie15/darey/blob/main/project%201/project20/10-running.png)
 
 Flags used
 
@@ -122,9 +142,13 @@ Verify if the container is running `docker ps -a`
 
 `CREATE USER ''@'%' IDENTIFIED BY ''; GRANT ALL PRIVILEGES ON * . * TO ''@'%'; `
 
+![Update](https://github.com/femie15/darey/blob/main/project%201/project20/11-script.png)
+
 5. Run the script:
 
 `docker exec -i mysql-server mysql -uroot -p$MYSQL_PW < create_user.sql `
+
+![Update](https://github.com/femie15/darey/blob/main/project%201/project20/12-runScript.png)
 
 If you see a warning like below, it is acceptable to ignore:
 
@@ -149,6 +173,8 @@ admin : username for user created from the SQL script "create_user.sql"
 
 _______________________________________________________________________________
 
+![Update](https://github.com/femie15/darey/blob/main/project%201/project20/13-mysqlClient.png)
+
 7. Clone the tooling repo 
 
 `git clone https://github.com/darey-devops/tooling.git `
@@ -158,6 +184,8 @@ _______________________________________________________________________________
 `export tooling_db_schema=./tooling/html/tooling_db_schema.sql`
 
 Verify that the path is exported `echo $tooling_db_schema`
+
+![Update](https://github.com/femie15/darey/blob/main/project%201/project20/14-schema_seedData.png)
 
 9. Use the SQL script to create the database and prepare the schema (With the docker exec command, you can execute a command in a running container).
 
@@ -200,6 +228,8 @@ Also, you have to notice the . at the end. This is important as that tells Docke
 
 _________________________________________________________________________________
 
+![Update](https://github.com/femie15/darey/blob/main/project%201/project20/15-bildImage.png)
+
 Run the container:
 
 `docker run --network tooling_app_network -p 8085:80 -it tooling:0.0.1 `
@@ -212,7 +242,9 @@ But we cannot directly use port 80 on our host machine because it is already in 
 
 _________________________________________________________________________________
 
+![Update](https://github.com/femie15/darey/blob/main/project%201/project20/16-runContainer.png)
 
+![Update](https://github.com/femie15/darey/blob/main/project%201/project20/17-running.png)
 
 
 
@@ -257,6 +289,10 @@ Task 2
 - Push the docker images from your PC to the repository
 
 `docker tag todo femie15/todo` `docker push femie15/todo`
+
+![Update](https://github.com/femie15/darey/blob/main/project%201/project20/18-pushDocker.png)
+
+![Update](https://github.com/femie15/darey/blob/main/project%201/project20/19-dockerHub.png)
 
 Task 3
 
@@ -308,4 +344,5 @@ Verify that the compose is in the running status:
 
 `docker compose ls`
 
+![Update](https://github.com/femie15/darey/blob/main/project%201/project20/20-compose.png)
 
